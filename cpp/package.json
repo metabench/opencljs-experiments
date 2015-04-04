@@ -1,0 +1,15 @@
+{
+  "name": "ocl",
+  "version": "0.0.1",
+  "description": "opencl",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "nan": "^1.6.2"
+  },
+  "gypfile": true
+}
