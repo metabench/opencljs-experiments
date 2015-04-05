@@ -23,7 +23,7 @@ Persistent<Function> MyObject::constructor;
 
 
 
-
+/*
 
 
 const char *kernelSource =                                       "\n" \
@@ -42,7 +42,7 @@ const char *kernelSource =                                       "\n" \
 "}                                                               \n" \
                                                                 "\n" ;
 
-
+*/
 
 // Collections of
 // buffers
@@ -196,6 +196,13 @@ void FasterVectorAdd(unsigned int size, float* A, float* B, float* Res) {
 // I think we need to return the result of the kernel directly.
 
 void ExecuteKernel(unsigned int kernel_id, std::vector<unsigned int> input_buffer_ids, unsigned int output_buffer_id) {
+    // Is this only for executing a kernel that keeps the same amount of data?
+    //  Or we iterate by the result size
+    //  Iterating by result size may be a really good way of doing it.
+    //  So we have one execution per result item.
+
+
+
 
     // Though maybe we should be specifying the size in bytes here.
 
@@ -232,8 +239,15 @@ void ExecuteKernel(unsigned int kernel_id, std::vector<unsigned int> input_buffe
 
     globalSize = ceil(cl_buffer_sizes[output_buffer_id]/(float)localSize)*localSize;
 
+    // More precise control over the size?
+
     cout << "globalSize " << globalSize << endl;
     cout << "localSize " << localSize << endl;
+
+    // However, if running a reduction algorithm...
+    //  We do use the sizes from the output buffer.
+
+
 
     // globalSize = ceil(size/(float)localSize)*localSize;
 

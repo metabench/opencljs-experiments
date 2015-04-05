@@ -12,11 +12,24 @@ var k2s = write_kernel('vecAdd', [['a', Float32Array], ['b', Float32Array]], ['r
   res[id] = a[id] + b[id];
 `);
 
+// Kernel that can execute with a different number of results being made to the input data.
+
+
+
+
+
+// Averaging numbers...
+// Can probably get the averages from groups quickly.
+//  Looks like it would need a divide and conquor algorithm.
+
+
+
+
 
 console.log('k2s', k2s);
 
 var kernelSource = k2s;
-var size = 16;
+var size = 255;
 var a = smalloc.alloc(size, smalloc.Types.Float);
 var b = smalloc.alloc(size, smalloc.Types.Float);
 var res = smalloc.alloc(size, smalloc.Types.Float);
@@ -29,9 +42,10 @@ for (c = 0; c < size; c++) {
 // We can give it the kernel.
 var popencl = new POpenCL();
 
-popencl.add_buffer('A', 16);
-popencl.add_buffer('B', 16);
-popencl.add_buffer('Res', 16);
+popencl.add_buffer('A', size);
+popencl.add_buffer('B', size);
+popencl.add_buffer('Res', size);
+
 popencl.add_kernel('vecAdd', kernelSource);
 // Let's set the first two buffers.
 popencl.set_buffer('A', a);
@@ -47,4 +61,4 @@ popencl.get_buffer('Res', res);
 // Then let's execute the kernel on the buffer.
 //console.log('res', res);
 console.log('time_diff', time_diff);
-console.log('res', res);
+//console.log('res', res);
