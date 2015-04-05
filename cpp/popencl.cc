@@ -124,6 +124,38 @@ cl_int err;
 
 
 
+void ReleaseAll() {
+
+  /*
+  clReleaseMemObject(d_a);
+  clReleaseMemObject(d_b);
+  clReleaseMemObject(d_c);
+  clReleaseProgram(program);
+  clReleaseKernel(kernel);
+  clReleaseCommandQueue(queue);
+  clReleaseContext(context);
+  */
+
+
+  for(std::vector<cl_mem>::size_type i = 0; i != cl_buffers.size(); i++) {
+      /* std::cout << someVector[i]; ... */
+      clReleaseMemObject(cl_buffers[i]);
+  }
+
+  for(std::vector<cl_program>::size_type i = 0; i != vector_programs.size(); i++) {
+      /* std::cout << someVector[i]; ... */
+      clReleaseProgram(vector_programs[i]);
+  }
+
+  for(std::vector<cl_kernel>::size_type i = 0; i != vector_kernels.size(); i++) {
+      /* std::cout << someVector[i]; ... */
+      clReleaseKernel(vector_kernels[i]);
+  }
+
+  clReleaseContext(context);
+  clReleaseCommandQueue(queue);
+
+}
 
 /*
 void FasterVectorAdd(unsigned int size, float* A, float* B, float* Res) {
@@ -507,6 +539,7 @@ void GetBuffer(std::string name, float* A) {
     //cout << "done GetBuffer" << endl;
 }
 
+
 /*
 
 void SaveBuffer(unsigned int size, float* A) {
@@ -705,6 +738,8 @@ void MyObject::Init(Handle<Object> exports) {
   NODE_SET_PROTOTYPE_METHOD(tpl, "add_kernel", NAN_AddKernel);
   NODE_SET_PROTOTYPE_METHOD(tpl, "execute_kernel", NAN_ExecuteKernel);
   NODE_SET_PROTOTYPE_METHOD(tpl, "execute_kernel_all_size_params", NAN_ExecuteKernelAllSizeParams);
+
+  NODE_SET_PROTOTYPE_METHOD(tpl, "release_all", NAN_ReleaseAll);
 
   // ExecuteKernelAllSizeParams
 
@@ -1022,6 +1057,21 @@ NAN_METHOD(MyObject::NAN_GetBuffer) {
 
 }
 
+// NAN_ReleaseAll
+
+NAN_METHOD(MyObject::NAN_ReleaseAll) {
+
+  // This could store the buffer in the background.
+
+  // Could make OpenCL system where a fairly small number of buffers (like 2 or 3) are stored and used.
+  //  Some buffers would be more frequently reloaded.
+  NanScope();
+
+  ReleaseAll();
+  NanReturnValue(NanNew(1));
+
+}
+
 // NAN_ExecuteKernelAllSizeParams
 
 
@@ -1071,6 +1121,7 @@ NAN_METHOD(MyObject::NAN_ExecuteKernelAllSizeParams) {
   NanReturnValue(NanNew(1));
 
 }
+
 
 NAN_METHOD(MyObject::NAN_ExecuteKernel) {
 

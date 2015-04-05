@@ -35,9 +35,15 @@ var k2s = write_kernel('reduce_16_average', [['a', Float32Array]], ['res', Float
 
 // What about a general case?
 //var size = 163840 * 3;
-var size = 400000;
 
-var reduction_factor = 128;
+// Looks like the accumulator can't handle this so well when using very big numbers.
+
+
+
+//var size = 2000;
+var size = 800000;
+
+var reduction_factor = 8;
 
 // 17, reduced by a factor of 128 would go to 1
 
@@ -118,6 +124,20 @@ var k3s;
 // Want to do another reduce on the data produced by the first reduce.
 
 // Seems like this accumulates inaccuracy.
+//  Perhaps this could accumulate the total numbers with only one division for the average at the end.
+
+// So after each stage, would have the total.
+
+// Perhaps a kernel to total the numbers would be better.
+//  Then at the end we calculate the average.
+
+
+
+
+// The kernel could take a reduction factor as a parameter.
+// Or JavaScript can be used to hard-code it.
+
+
 
 
 var k_weighted_reduce_128_average = write_kernel_all_size_params('weighted_reduce_128_average', [['a', Float32Array]], ['res', Float32Array], `
@@ -132,12 +152,12 @@ var k_weighted_reduce_128_average = write_kernel_all_size_params('weighted_reduc
 
   // Each logical item in the input has got two values.
 
-  p = id * 128;
+  p = id * ` + reduction_factor + `;
 
   // could add a weighted amount to the total?
   //  somehow make the calculation more precise.
 
-  for (int c = 0; c < 128; c++) {
+  for (int c = 0; c < ` + reduction_factor + `; c++) {
     p2 = p + c;
 
     if (p2 < size_a / 2) {
@@ -177,10 +197,10 @@ var k_weighted_output_reduce_128_average = write_kernel_all_size_params('weighte
   int processed_input_count = 0;
   int p;
   int p2;
-  p = id * 128;
+  p = id * ` + reduction_factor + `;
 
 
-  for (int c = 0; c < 128; c++) {
+  for (int c = 0; c < ` + reduction_factor + `; c++) {
     p2 = p + c;
 
     if (p2 < size_a) {
@@ -335,6 +355,7 @@ console.log('reduced_1', reduced_1);
 
 var reduced_2 = Math.ceil(reduced_1 / reduction_factor);
 var reduced_3 = Math.ceil(reduced_2 / reduction_factor);
+var reduced_4 = Math.ceil(reduced_3 / reduction_factor);
 console.log('reduced_3', reduced_3);
 
 var a = smalloc.alloc(size, smalloc.Types.Float);
@@ -345,6 +366,7 @@ var res = smalloc.alloc(reduced_1 * 2, smalloc.Types.Float);
 
 var res2 = smalloc.alloc(reduced_2 * 2, smalloc.Types.Float);
 var res3 = smalloc.alloc(reduced_3 * 2, smalloc.Types.Float);
+var res4 = smalloc.alloc(reduced_4 * 2, smalloc.Types.Float);
 
 
 var c;
@@ -367,6 +389,7 @@ popencl.add_buffer('A', size);
 popencl.add_buffer('Res', reduced_1 * 2);
 popencl.add_buffer('Res2', reduced_2 * 2);
 popencl.add_buffer('Res3', reduced_3 * 2);
+popencl.add_buffer('Res4', reduced_4 * 2);
 
 
 popencl.add_kernel('weighted_output_reduce_128_average', kernelSource);
@@ -389,6 +412,7 @@ popencl.execute_kernel_all_size_params('weighted_reduce_128_average', ['Res'], '
 
 
 popencl.execute_kernel_all_size_params('weighted_reduce_128_average', ['Res2'], 'Res3');
+popencl.execute_kernel_all_size_params('weighted_reduce_128_average', ['Res3'], 'Res4');
 
 
 // weighted_reduce_128_average
@@ -425,9 +449,15 @@ var time_diff = process.hrtime(start_time);
 popencl.get_buffer('Res', res);
 popencl.get_buffer('Res2', res2);
 popencl.get_buffer('Res3', res3);
+popencl.get_buffer('Res4', res4);
 // Then let's execute the kernel on the buffer.
 //console.log('res', res);
 console.log('time_diff', time_diff);
-console.log('res', res);
-console.log('res2', res2);
-console.log('res3', res3);
+//console.log('res', res);
+//console.log('res2', res2);
+//console.log('res3', res3);
+console.log('res4', res4);
+
+
+// And deallocate buffers and kernels in popencl.
+popencl.release_all();
