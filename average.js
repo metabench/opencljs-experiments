@@ -36,12 +36,12 @@ var k2s = write_kernel('reduce_16_average', [['a', Float32Array]], ['res', Float
   //float total = 0;
   float total = 0;
   int p;
-  for (int c = 0; c < 16; c++) {
+  for (int c = 0; c < ` + reduction_factor + `; c++) {
     p = id * ` + reduction_factor + `;
     total += a[p + c];
   }
   //res[id] = 5;
-  res[id] = total / 16;
+  res[id] = total / ` + reduction_factor + `;
 `);
 
 // Kernel that can execute with a different number of results being made to the input data.
