@@ -1033,9 +1033,11 @@ NAN_METHOD(MyObject::NAN_ExecuteKernelAllSizeParams) {
   //  Some buffers would be more frequently reloaded.
   NanScope();
 
-  std::string kernel_name (*NanAsciiString(args[1]));
+  std::string kernel_name (*NanAsciiString(args[0]));
 
   unsigned int kernel_id = map_kernel_indexes_by_name[kernel_name];
+  //cout << "kernel_name " << kernel_name << endl;
+  //cout << "kernel_id " << kernel_id << endl;
 
 
   //cout << "NAN_ExecuteKernel" << endl;
@@ -1043,8 +1045,8 @@ NAN_METHOD(MyObject::NAN_ExecuteKernelAllSizeParams) {
   //unsigned int len_input_buffer_names = (unsigned int)arr_input_buffer_names->GetIndexedPropertiesExternalArrayDataLength();
   unsigned int len_input_buffer_names = arr_input_buffer_names->Length();
   std::string output_buffer_name (*NanAsciiString(args[2]));
-  cout << "len_input_buffer_names " << len_input_buffer_names << endl;
-  cout << "output_buffer_name " << output_buffer_name << endl;
+  //cout << "len_input_buffer_names " << len_input_buffer_names << endl;
+  //cout << "output_buffer_name " << output_buffer_name << endl;
 
   // std::string tempString(*v8::String::Utf8Value(args[someInteger]));
 

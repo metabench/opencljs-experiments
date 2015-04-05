@@ -112,12 +112,59 @@ var k3s;
 //  And reduce from them, perhaps providing weighted outputs?
 
 
+// If we are doing a reduce_128 and there are not 128 items, we can note that down and still provide an answer.
+
+// Want to do another reduce on the data produced by the first reduce.
+
+var k_weighted_reduce_128_average = write_kernel_all_size_params('weighted_reduce_128_average', [['a', Float32Array]], ['res', Float32Array], `
+
+
+  //float total = 0;
+  float total = 0;
+  int processed_input_count = 0;
+  int p;
+  int p2;
+
+
+  // Each logical item in the input has got two values.
+
+  p = id * 128;
+
+  //for (int c = 0; c < 128; c++) {
+    //p2 = p + c;
+
+    //if (p2 < size_a / 2) {
+
+      // Then we act.
+      //  I think we may have a structure for a reduce kernel.
+      //  So we could do write_reduce_kernel.
+      //  We have access to the sizes, and the inner loop.
+
+
+      //total += a[p2 * 2];
+
+      //processed_input_count += a[p2 * 2 + 1];
+    //}
+
+    //if (2 < n) {
+    //  total += a[p2];
+    //  c2++;
+    //}
+
+  //}
+  res[id * 2] = 3;
+  res[id * 2 + 1] = 3;
+  //res[id] = total / 128;
+
+
+  //res[id * 2] = total / processed_input_count;
+  //res[id * 2 + 1] = processed_input_count;
+`);
 
 // So this would count how many values were included.
 
 
 var k_weighted_output_reduce_128_average = write_kernel_all_size_params('weighted_output_reduce_128_average', [['a', Float32Array]], ['res', Float32Array], `
-
 
 
   //float total = 0;
@@ -281,8 +328,8 @@ console.log('reduced_1', reduced_1);
 
 
 
-//var reduced_2 = Math.ceil(reduced_1 / reduction_factor);
-//console.log('reduced_2', reduced_2);
+var reduced_2 = Math.ceil(reduced_1 / reduction_factor);
+console.log('reduced_2', reduced_2);
 
 var a = smalloc.alloc(size, smalloc.Types.Float);
 //var b = smalloc.alloc(size, smalloc.Types.Float);
@@ -290,7 +337,7 @@ var a = smalloc.alloc(size, smalloc.Types.Float);
 // * 2 so it holds weights / counts
 var res = smalloc.alloc(reduced_1 * 2, smalloc.Types.Float);
 
-//var res2 = smalloc.alloc(reduced_2, smalloc.Types.Float);
+var res2 = smalloc.alloc(reduced_2 * 2, smalloc.Types.Float);
 
 var c;
 for (c = 0; c < size; c++) {
@@ -302,7 +349,7 @@ for (c = 0; c < size; c++) {
 var popencl = new POpenCL();
 
 
-console.log('a', a);
+//console.log('a', a);
 
 
 popencl.add_buffer('A', size);
@@ -310,10 +357,13 @@ popencl.add_buffer('A', size);
 
 
 popencl.add_buffer('Res', reduced_1 * 2);
-//popencl.add_buffer('Res2', reduced_2);
+popencl.add_buffer('Res2', reduced_2 * 2);
 
 
 popencl.add_kernel('weighted_output_reduce_128_average', kernelSource);
+
+popencl.add_kernel('weighted_reduce_128_average', k_weighted_reduce_128_average);
+
 // Let's set the first two buffers.
 popencl.set_buffer('A', a);
 //popencl.set_buffer('B', b);
@@ -324,6 +374,11 @@ var start_time = process.hrtime();
 
 
 popencl.execute_kernel_all_size_params('weighted_output_reduce_128_average', ['A'], 'Res');
+
+
+popencl.execute_kernel_all_size_params('weighted_reduce_128_average', ['Res'], 'Res2');
+
+// weighted_reduce_128_average
 
 //popencl.execute_kernel_all_size_params('reduce_16_average', ['Res'], 'Res2');
 
@@ -362,9 +417,9 @@ var time_diff = process.hrtime(start_time);
 //popencl.vector_add(a, b, res);
 //popencl.execute_kernel(['A', 'B'], ['Res']);
 popencl.get_buffer('Res', res);
-//popencl.get_buffer('Res2', res2);
+popencl.get_buffer('Res2', res2);
 // Then let's execute the kernel on the buffer.
 //console.log('res', res);
 console.log('time_diff', time_diff);
 console.log('res', res);
-//console.log('res2', res2);
+console.log('res2', res2);
