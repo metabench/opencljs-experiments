@@ -193,7 +193,116 @@ void FasterVectorAdd(unsigned int size, float* A, float* B, float* Res) {
 
 // ExecuteKernel(kernel_id, input_buffer_ids, output_buffer_id);
 
+// Also a function that writes kernels with all size params available.
+// so would have both the buffer, and its size.
+
+
+// ExecuteKernelWithAllSizeParams
+
+
+
 // I think we need to return the result of the kernel directly.
+
+
+
+void ExecuteKernelAllSizeParams(unsigned int kernel_id, std::vector<unsigned int> input_buffer_ids, unsigned int output_buffer_id) {
+    // Is this only for executing a kernel that keeps the same amount of data?
+    //  Or we iterate by the result size
+    //  Iterating by result size may be a really good way of doing it.
+    //  So we have one execution per result item.
+
+
+    cout << "ExecuteKernelAllSizeParams" << endl;
+
+    // Though maybe we should be specifying the size in bytes here.
+
+    //
+
+    //cout << "output_buffer_id " << output_buffer_id << endl;
+    //cout << "kernel_id " << kernel_id << endl;
+
+
+    unsigned int num_input_buffer_ids = input_buffer_ids.size();
+
+    cl_kernel kernel = vector_kernels[kernel_id];
+
+    unsigned int arg_idx = 0;
+
+    unsigned int num_items;
+    for (unsigned int c = 0; c < num_input_buffer_ids; c++) {
+        err  = clSetKernelArg(kernel, arg_idx++, sizeof(cl_mem), &cl_buffers[input_buffer_ids[c]]);
+
+        // The input buffer size may be needed.
+        // Will make a different version of execute that provides the sizes of various buffers as const parameters.
+        //  With reduce functions, may need to check that the input bounds are not exceeded.
+
+        cout << "cl_buffer_sizes[input_buffer_ids[c]] / sizeof(float) " << cl_buffer_sizes[input_buffer_ids[c]] / sizeof(float) << endl;
+
+        num_items = cl_buffer_sizes[input_buffer_ids[c]] / sizeof(float);
+
+        err = clSetKernelArg(kernel, arg_idx++, sizeof(unsigned int), &num_items);
+
+    }
+
+    err = clSetKernelArg(kernel, arg_idx++, sizeof(cl_mem), &cl_buffers[output_buffer_id]);
+
+    // The size of the execution?
+
+    // look at the size of the 1st buffer for the moment?
+    //  Maybe the last buffer?
+
+    cout << "cl_buffer_sizes[output_buffer_id] " << (unsigned int)cl_buffer_sizes[output_buffer_id] << endl;
+
+    // The last kernel arg should be the number of items in the output buffer.
+
+
+    num_items = cl_buffer_sizes[output_buffer_id] / sizeof(float);
+    cout << "num_items " << num_items << endl;
+
+
+    //err = clSetKernelArg(kernel, arg_idx++, sizeof(unsigned int), &cl_buffer_sizes[output_buffer_id]);
+    err = clSetKernelArg(kernel, arg_idx++, sizeof(unsigned int), &num_items);
+
+    //size_t bytes = cl_buffer_sizes[output_buffer_id]*sizeof(float);
+
+    //cout << "cl_buffer_sizes[output_buffer_id] " << cl_buffer_sizes[output_buffer_id] << endl;
+
+    globalSize = ceil(cl_buffer_sizes[output_buffer_id]/(float)localSize)*localSize;
+
+    // More precise control over the size?
+
+    cout << "globalSize " << globalSize << endl;
+    cout << "localSize " << localSize << endl;
+
+    // However, if running a reduction algorithm...
+    //  We do use the sizes from the output buffer.
+
+
+
+    // globalSize = ceil(size/(float)localSize)*localSize;
+
+    //unsigned int size = cl_buffer_sizes[idx_buffer];
+
+    err = clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &globalSize, &localSize, 0, NULL, NULL);
+
+
+    // Wait for the command queue to get serviced before reading back results
+    clFinish(queue);
+
+    // Read the results from the device
+    //clEnqueueReadBuffer(queue, cl_buffers[output_buffer_id], CL_TRUE, 0, cl_buffer_sizes[output_buffer_id], cl_buffers[output_buffer_id], 0, NULL, NULL );
+
+    // Think we don't read it here.
+
+
+    // err  = clSetKernelArg(kernel, 0, sizeof(cl_mem), &d_a);
+
+
+
+
+}
+
+
 
 void ExecuteKernel(unsigned int kernel_id, std::vector<unsigned int> input_buffer_ids, unsigned int output_buffer_id) {
     // Is this only for executing a kernel that keeps the same amount of data?
@@ -202,14 +311,14 @@ void ExecuteKernel(unsigned int kernel_id, std::vector<unsigned int> input_buffe
     //  So we have one execution per result item.
 
 
-
+    cout << "ExecuteKernel" << endl;
 
     // Though maybe we should be specifying the size in bytes here.
 
     //
 
-    cout << "output_buffer_id " << output_buffer_id << endl;
-    cout << "kernel_id " << kernel_id << endl;
+    //cout << "output_buffer_id " << output_buffer_id << endl;
+    //cout << "kernel_id " << kernel_id << endl;
 
 
     unsigned int num_input_buffer_ids = input_buffer_ids.size();
@@ -221,6 +330,15 @@ void ExecuteKernel(unsigned int kernel_id, std::vector<unsigned int> input_buffe
 
     for (unsigned int c = 0; c < num_input_buffer_ids; c++) {
         err  = clSetKernelArg(kernel, arg_idx++, sizeof(cl_mem), &cl_buffers[input_buffer_ids[c]]);
+
+        // The input buffer size may be needed.
+        // Will make a different version of execute that provides the sizes of various buffers as const parameters.
+        //  With reduce functions, may need to check that the input bounds are not exceeded.
+
+        cout << "cl_buffer_sizes[input_buffer_ids[c]] / sizeof(float) " << cl_buffer_sizes[input_buffer_ids[c]] / sizeof(float) << endl;
+
+
+
     }
 
     err = clSetKernelArg(kernel, arg_idx++, sizeof(cl_mem), &cl_buffers[output_buffer_id]);
@@ -230,12 +348,21 @@ void ExecuteKernel(unsigned int kernel_id, std::vector<unsigned int> input_buffe
     // look at the size of the 1st buffer for the moment?
     //  Maybe the last buffer?
 
+    cout << "cl_buffer_sizes[output_buffer_id] " << (unsigned int)cl_buffer_sizes[output_buffer_id] << endl;
 
-    err = clSetKernelArg(kernel, arg_idx++, sizeof(unsigned int), &cl_buffer_sizes[output_buffer_id]);
+    // The last kernel arg should be the number of items in the output buffer.
+
+
+    unsigned int num_items = cl_buffer_sizes[output_buffer_id] / sizeof(float);
+    cout << "num_items " << num_items << endl;
+
+
+    //err = clSetKernelArg(kernel, arg_idx++, sizeof(unsigned int), &cl_buffer_sizes[output_buffer_id]);
+    err = clSetKernelArg(kernel, arg_idx++, sizeof(unsigned int), &num_items);
 
     //size_t bytes = cl_buffer_sizes[output_buffer_id]*sizeof(float);
 
-    cout << "cl_buffer_sizes[output_buffer_id] " << cl_buffer_sizes[output_buffer_id] << endl;
+    //cout << "cl_buffer_sizes[output_buffer_id] " << cl_buffer_sizes[output_buffer_id] << endl;
 
     globalSize = ceil(cl_buffer_sizes[output_buffer_id]/(float)localSize)*localSize;
 
@@ -280,22 +407,23 @@ void AddBuffer(std::string name, unsigned int size) {
 
     //unsigned int size = cl_buffer_sizes[idx_buffer];
 
-    cout << "AddBuffer" << endl;
-    size_t bytes = size*sizeof(float);
+    //cout << "AddBuffer" << endl;
+    //size_t bytes = size*sizeof(float);
+    unsigned int bytes = size*sizeof(float);
 
-    cout << "bytes " << bytes << endl;
+    //cout << "bytes " << bytes << endl;
 
 
-    cout << "pre clCreateBuffer" << endl;
+    //cout << "pre clCreateBuffer" << endl;
     cl_buffers[i_buffer] = clCreateBuffer(context, CL_MEM_READ_WRITE, bytes, NULL, NULL);
     cl_buffer_sizes[i_buffer] = bytes;
-    cout << "post clCreateBuffer" << endl;
+    //cout << "post clCreateBuffer" << endl;
 
     map_buffer_indexes_by_name[name] = i_buffer;
 
     i_buffer++;
 
-    cout << "end AddBuffer" << endl;
+    //cout << "end AddBuffer" << endl;
 }
 
 void AddKernel(std::string name, std::string source) {
@@ -359,7 +487,7 @@ void LoadBuffer(unsigned int size, float* A) {
 void SetBuffer(std::string name, float* A) {
     unsigned int idx_buffer = map_buffer_indexes_by_name[name];
     unsigned int size = cl_buffer_sizes[idx_buffer];
-    cout << "SetBuffer" << endl;
+    //cout << "SetBuffer" << endl;
 
 
     //size_t bytes = size*sizeof(float);
@@ -372,11 +500,11 @@ void SetBuffer(std::string name, float* A) {
 void GetBuffer(std::string name, float* A) {
     unsigned int idx_buffer = map_buffer_indexes_by_name[name];
     unsigned int size = cl_buffer_sizes[idx_buffer];
-    cout << "GetBuffer" << endl;
+    //cout << "GetBuffer" << endl;
     //cout << "_LoadBuffer" << endl;
     //size_t bytes = size*sizeof(float);
     err = clEnqueueReadBuffer(queue, cl_buffers[idx_buffer], CL_TRUE, 0, size, A, 0, NULL, NULL );
-    cout << "done GetBuffer" << endl;
+    //cout << "done GetBuffer" << endl;
 }
 
 /*
@@ -576,6 +704,9 @@ void MyObject::Init(Handle<Object> exports) {
 
   NODE_SET_PROTOTYPE_METHOD(tpl, "add_kernel", NAN_AddKernel);
   NODE_SET_PROTOTYPE_METHOD(tpl, "execute_kernel", NAN_ExecuteKernel);
+  NODE_SET_PROTOTYPE_METHOD(tpl, "execute_kernel_all_size_params", NAN_ExecuteKernelAllSizeParams);
+
+  // ExecuteKernelAllSizeParams
 
   //NODE_SET_PROTOTYPE_METHOD(tpl, "save_buffer", NAN_SaveBuffer);
   //NODE_SET_PROTOTYPE_METHOD(tpl, "load_buffer", NAN_LoadBuffer);
@@ -704,7 +835,7 @@ NAN_METHOD(MyObject::New) {
 
 NAN_METHOD(MyObject::NAN_VectorAdd) {
   NanScope();
-  cout << "NAN_VectorAdd" << endl;
+  //cout << "NAN_VectorAdd" << endl;
   float* A;
   float* B;
   float* Res;
@@ -735,7 +866,7 @@ unsigned int stored_buffer_size;
 
 NAN_METHOD(MyObject::NAN_AddKernel) {
   NanScope();
-  cout << "NAN_AddKernel" << endl;
+  //cout << "NAN_AddKernel" << endl;
 
   // Add buffer should possibly just have the name and the size.
   //  Don't want the data itself to go in?
@@ -770,7 +901,7 @@ NAN_METHOD(MyObject::NAN_AddKernel) {
 
 NAN_METHOD(MyObject::NAN_AddBuffer) {
   NanScope();
-  cout << "NAN_AddBuffer" << endl;
+  //cout << "NAN_AddBuffer" << endl;
 
   // Add buffer should possibly just have the name and the size.
   //  Don't want the data itself to go in?
@@ -794,9 +925,9 @@ NAN_METHOD(MyObject::NAN_AddBuffer) {
   //if (obj->HasIndexedPropertiesInExternalArrayData()) {
   //    Res = static_cast<float*>(obj->GetIndexedPropertiesExternalArrayData());
   //}
-  cout << "size " << size << endl;
+  //cout << "size " << size << endl;
   AddBuffer(name, size);
-  cout << "post AddBuffer" << endl;
+  //cout << "post AddBuffer" << endl;
 
   NanReturnValue(NanNew(1));
 }
@@ -804,7 +935,7 @@ NAN_METHOD(MyObject::NAN_AddBuffer) {
 
 NAN_METHOD(MyObject::NAN_SetBuffer) {
   NanScope();
-  cout << "NAN_SaveBuffer" << endl;
+  //cout << "NAN_SaveBuffer" << endl;
 
   // Now takes the name and the buffer itself.
   //  JavaScript should have sent a buffer of the right size.
@@ -812,7 +943,7 @@ NAN_METHOD(MyObject::NAN_SetBuffer) {
 
 
   std::string buffer_name (*NanAsciiString(args[0]));
-  cout << "save buffer_name " << buffer_name << endl;
+  //cout << "save buffer_name " << buffer_name << endl;
 
 
 
@@ -841,9 +972,9 @@ NAN_METHOD(MyObject::NAN_SetBuffer) {
   //if (obj->HasIndexedPropertiesInExternalArrayData()) {
   //    Res = static_cast<float*>(obj->GetIndexedPropertiesExternalArrayData());
   //}
-  cout << "size " << size << endl;
+  //cout << "size " << size << endl;
   SetBuffer(buffer_name, A);
-  cout << "post _SaveBuffer" << endl;
+  //cout << "post _SaveBuffer" << endl;
 
   NanReturnValue(NanNew(1));
 }
@@ -858,7 +989,7 @@ NAN_METHOD(MyObject::NAN_GetBuffer) {
   NanScope();
 
 
-  cout << "LoadBuffer" << endl;
+  //cout << "LoadBuffer" << endl;
 
   std::string buffer_name (*NanAsciiString(args[0]));
   float* A;
@@ -883,7 +1014,7 @@ NAN_METHOD(MyObject::NAN_GetBuffer) {
   //if (obj->HasIndexedPropertiesInExternalArrayData()) {
   //    Res = static_cast<float*>(obj->GetIndexedPropertiesExternalArrayData());
   //}
-  cout << "size " << size << endl;
+  //cout << "size " << size << endl;
   //_LoadBuffer(size, A);
   NanReturnValue(NanNew(1));
 
@@ -891,6 +1022,53 @@ NAN_METHOD(MyObject::NAN_GetBuffer) {
 
 }
 
+// NAN_ExecuteKernelAllSizeParams
+
+
+NAN_METHOD(MyObject::NAN_ExecuteKernelAllSizeParams) {
+
+  // This could store the buffer in the background.
+
+  // Could make OpenCL system where a fairly small number of buffers (like 2 or 3) are stored and used.
+  //  Some buffers would be more frequently reloaded.
+  NanScope();
+
+  std::string kernel_name (*NanAsciiString(args[1]));
+
+  unsigned int kernel_id = map_kernel_indexes_by_name[kernel_name];
+
+
+  //cout << "NAN_ExecuteKernel" << endl;
+  Local<Array> arr_input_buffer_names = Local<Array>::Cast(args[1]);
+  //unsigned int len_input_buffer_names = (unsigned int)arr_input_buffer_names->GetIndexedPropertiesExternalArrayDataLength();
+  unsigned int len_input_buffer_names = arr_input_buffer_names->Length();
+  std::string output_buffer_name (*NanAsciiString(args[2]));
+  cout << "len_input_buffer_names " << len_input_buffer_names << endl;
+  cout << "output_buffer_name " << output_buffer_name << endl;
+
+  // std::string tempString(*v8::String::Utf8Value(args[someInteger]));
+
+  //v8::String::Utf8Value v8_input_buffer_name;
+
+  std::string input_buffer_name;
+  Local<String> v8_input_buffer_name;
+
+  unsigned int output_buffer_id;
+  std::vector<unsigned int> input_buffer_ids(len_input_buffer_names);
+  unsigned int i_ibn = 0;
+  for (unsigned int c = 0; c < len_input_buffer_names; c++) {
+    v8_input_buffer_name = arr_input_buffer_names->Get(c)->ToString();
+    input_buffer_name = (*NanAsciiString(v8_input_buffer_name));
+    input_buffer_ids[i_ibn] = map_buffer_indexes_by_name[input_buffer_name];
+    i_ibn++;
+  }
+
+  output_buffer_id = map_buffer_indexes_by_name[output_buffer_name];
+
+  ExecuteKernelAllSizeParams(kernel_id, input_buffer_ids, output_buffer_id);
+  NanReturnValue(NanNew(1));
+
+}
 
 NAN_METHOD(MyObject::NAN_ExecuteKernel) {
 
@@ -905,7 +1083,7 @@ NAN_METHOD(MyObject::NAN_ExecuteKernel) {
   unsigned int kernel_id = map_kernel_indexes_by_name[kernel_name];
 
 
-  cout << "NAN_ExecuteKernel" << endl;
+  //cout << "NAN_ExecuteKernel" << endl;
 
   Local<Array> arr_input_buffer_names = Local<Array>::Cast(args[1]);
 
@@ -942,11 +1120,11 @@ NAN_METHOD(MyObject::NAN_ExecuteKernel) {
 
 
     input_buffer_name = (*NanAsciiString(v8_input_buffer_name));
-    cout << "input_buffer_name " << input_buffer_name << endl;
+    //cout << "input_buffer_name " << input_buffer_name << endl;
 
     input_buffer_ids[i_ibn] = map_buffer_indexes_by_name[input_buffer_name];
 
-    cout << "input_buffer_ids[i_ibn] " << input_buffer_ids[i_ibn] << endl;
+    //cout << "input_buffer_ids[i_ibn] " << input_buffer_ids[i_ibn] << endl;
 
     i_ibn++;
 

@@ -18,6 +18,7 @@ class MyObject : public node::ObjectWrap {
   static NAN_METHOD(NAN_SetBuffer);
   static NAN_METHOD(NAN_GetBuffer);
   static NAN_METHOD(NAN_ExecuteKernel);
+  static NAN_METHOD(NAN_ExecuteKernelAllSizeParams);
   //static NAN_METHOD(NAN_SaveBuffer);
   //static NAN_METHOD(NAN_LoadBuffer);
   static v8::Persistent<v8::Function> constructor;

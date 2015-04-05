@@ -3,7 +3,10 @@ var smalloc = require('smalloc');
 var jsgui = require('../../ws/js/core/jsgui-lang-essentials');
 var each = jsgui.eac;
 
-var write_kernel = require('./write-kernel');
+var mod_write_kernel = require('./write-kernel');
+
+var write_kernel_all_size_params = mod_write_kernel.write_kernel_all_size_params;
+var write_kernel = mod_write_kernel.write_kernel;
 
 // Perhaps running a kernel just once (or on one set of data) will not be so useful.
 // Run kernel over set, get results, repeat...
