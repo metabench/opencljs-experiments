@@ -4,11 +4,63 @@ var each = jsgui.eac;
 var map_cl_param_types = {
   'Float32Array': 'float *',
   'Uint32Array': 'unsigned int *',
-  'Uint64Array': 'unsigned long *',
+  'Uint64Array': 'unsigned long *'
 
 }
 
 var Uint64Array = {};
+
+
+var write_counted_reduction_kernel = function(name, type, reduction_factor, preparer, repeater, concluder) {
+  var res = write_kernel_all_size_params(name,
+  [['input', type], ['input_counts', Uint32Array],
+  ['output', type], ['output_input_counts', Uint32Array]],
+  `int processed_input_count = 0;
+  int p = id * ` + reduction_factor + `;
+  int p2;
+  ` + preparer + `
+  int c;
+
+  for (c = 0; c < ` + reduction_factor + `; c++) {
+    p2 = p + c;
+    if (p2 < size_input) {
+      processed_input_count += input_counts[p2];
+    }
+  }
+  for (c = 0; c < ` + reduction_factor + `; c++) {
+    p2 = p + c;
+    if (p2 < size_input) {
+      ` + repeater + `
+    }
+  }
+  ` + concluder + `
+  output_input_counts[id] = processed_input_count;`);
+
+  return res;
+}
+
+var write_counted_output_reduction_kernel = function(name, type, reduction_factor, preparer, repeater, concluder) {
+
+  var res = write_kernel_all_size_params(name, [['input', type], ['output', type], ['output_input_counts', Uint32Array]],
+  `int processed_input_count = 0;
+  int p = id * ` + reduction_factor + `;
+  int p2;
+  ` + preparer + `
+  for (int c = 0; c < ` + reduction_factor + `; c++) {
+    p2 = p + c;
+    if (p2 < size_input) {
+      ` + repeater + `
+      processed_input_count++;
+    }
+  }
+  ` + concluder + `
+  output_input_counts[id] = processed_input_count;`);
+
+  return res;
+
+}
+
+
 
 
 // And don't have specific output buffers / parameters.
@@ -108,5 +160,8 @@ var write_kernel = function(name, input_parameters, output_parameter, source) {
 
 module.exports = {
   'write_kernel': write_kernel,
-  'write_kernel_all_size_params': write_kernel_all_size_params
+  'write_kernel_all_size_params': write_kernel_all_size_params,
+  'write_counted_reduction_kernel': write_counted_reduction_kernel,
+  'write_counted_output_reduction_kernel': write_counted_output_reduction_kernel,
+  'Uint64Array': Uint64Array
 };
