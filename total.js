@@ -7,9 +7,9 @@ var mod_write_kernel = require('./write-kernel');
 var write_kernel_all_size_params = mod_write_kernel.write_kernel_all_size_params;
 var write_kernel = mod_write_kernel.write_kernel;
 
-//var size = 250000000;
+var size = 250000000;
 
-var size = 1000;
+//var size = 1000;
 
 //var size = 16;
 
@@ -27,7 +27,7 @@ for (c = 0; c < size; c++) {
     //}
 
     //a[c] = c * 2 * c;
-    a[c] = 1;
+    a[c] = c * 0.000000125;
 
     //b[c] = c * 2;
     //res[c] = 0;
@@ -428,10 +428,12 @@ console.log('n_stage', n_stage);
 // Then let's execute the kernel on the buffer.
 //console.log('res', res);
 console.log('time_diff', time_diff);
-console.log('stage_results[0]', stage_results[0]);
-console.log('stage_input_count_buffers[0]', stage_input_count_buffers[0]);
-console.log('stage_results[1]', stage_results[1]);
-console.log('stage_input_count_buffers[1]', stage_input_count_buffers[1]);
+
+//console.log('stage_results[0]', stage_results[0]);
+//console.log('stage_input_count_buffers[0]', stage_input_count_buffers[0]);
+//console.log('stage_results[1]', stage_results[1]);
+//console.log('stage_input_count_buffers[1]', stage_input_count_buffers[1]);
+
 //console.log('res2', res2);
 //console.log('res3', res3);
 //console.log('res4', res4);
