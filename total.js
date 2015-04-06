@@ -3,6 +3,13 @@ var smalloc = require('smalloc');
 var jsgui = require('../../ws/js/core/jsgui-lang-essentials');
 var each = jsgui.eac;
 
+
+// Perhaps while calculating the total it should be using double precision.
+//  Should probably do some code for this
+
+
+
+
 var mod_write_kernel = require('./write-kernel');
 var write_kernel_all_size_params = mod_write_kernel.write_kernel_all_size_params;
 var write_kernel = mod_write_kernel.write_kernel;
@@ -16,6 +23,7 @@ var size = 250000000;
 var reduction_factor = 64;
 
 var a = smalloc.alloc(size, smalloc.Types.Float);
+
 var c;
 for (c = 0; c < size; c++) {
     //a[c] = c * 4 + 1;
