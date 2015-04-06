@@ -38,12 +38,18 @@ var k2s = write_kernel('reduce_16_average', [['a', Float32Array]], ['res', Float
 
 // Looks like the accumulator can't handle this so well when using very big numbers.
 
+// It may be that kernels are too time-consuming when they have large reduction factors on large arrays.
+//  This causes that Windows driver reset... I think that's the problem.
+
+
 
 
 //var size = 2000;
-var size = 800000;
+//var size = 241000;
 
-var reduction_factor = 8;
+var size = 1000000;
+
+var reduction_factor = 16;
 
 // 17, reduced by a factor of 128 would go to 1
 
@@ -142,7 +148,6 @@ var k3s;
 
 var k_weighted_reduce_128_average = write_kernel_all_size_params('weighted_reduce_128_average', [['a', Float32Array]], ['res', Float32Array], `
 
-
   //float total = 0;
   double total = 0;
   int processed_input_count = 0;
@@ -177,10 +182,9 @@ var k_weighted_reduce_128_average = write_kernel_all_size_params('weighted_reduc
     //}
 
   }
-  res[id * 2] = 3;
-  res[id * 2 + 1] = 3;
+  //res[id * 2] = 3;
+  //res[id * 2 + 1] = 3;
   //res[id] = total / 128;
-
 
   res[id * 2] = total / processed_input_count;
   res[id * 2 + 1] = processed_input_count;
@@ -188,12 +192,13 @@ var k_weighted_reduce_128_average = write_kernel_all_size_params('weighted_reduc
 
 // So this would count how many values were included.
 
+// Maybe this would work better if all values in buffers are double precision.
 
 var k_weighted_output_reduce_128_average = write_kernel_all_size_params('weighted_output_reduce_128_average', [['a', Float32Array]], ['res', Float32Array], `
 
 
   //float total = 0;
-  float total = 0;
+  double total = 0;
   int processed_input_count = 0;
   int p;
   int p2;
@@ -214,17 +219,7 @@ var k_weighted_output_reduce_128_average = write_kernel_all_size_params('weighte
       total += a[p2];
       processed_input_count++;
     }
-
-    //if (2 < n) {
-    //  total += a[p2];
-    //  c2++;
-    //}
-
   }
-  //res[id * 2] = id;
-  //res[id * 2 + 1] = id;
-  //res[id] = total / 128;
-
 
   res[id * 2] = total / processed_input_count;
   res[id * 2 + 1] = processed_input_count;
@@ -371,7 +366,17 @@ var res4 = smalloc.alloc(reduced_4 * 2, smalloc.Types.Float);
 
 var c;
 for (c = 0; c < size; c++) {
-    a[c] = c * 4 + 1;
+    //a[c] = c * 4 + 1;
+
+    if (c % 16 === 0) {
+      a[c] = 12;
+    } else {
+      a[c] = 100;
+    }
+
+
+
+
     //b[c] = c * 2;
     //res[c] = 0;
 }

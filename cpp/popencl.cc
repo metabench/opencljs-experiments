@@ -236,8 +236,11 @@ void FasterVectorAdd(unsigned int size, float* A, float* B, float* Res) {
 // I think we need to return the result of the kernel directly.
 
 
+// Don't have any output buffer in particular here.
 
-void ExecuteKernelAllSizeParams(unsigned int kernel_id, std::vector<unsigned int> input_buffer_ids, unsigned int output_buffer_id) {
+
+
+void ExecuteKernelAllSizeParams(unsigned int kernel_id, std::vector<unsigned int> input_buffer_ids) {
     // Is this only for executing a kernel that keeps the same amount of data?
     //  Or we iterate by the result size
     //  Iterating by result size may be a really good way of doing it.
@@ -261,7 +264,8 @@ void ExecuteKernelAllSizeParams(unsigned int kernel_id, std::vector<unsigned int
     unsigned int arg_idx = 0;
 
     unsigned int num_items;
-    for (unsigned int c = 0; c < num_input_buffer_ids; c++) {
+    unsigned int c;
+    for (c = 0; c < num_input_buffer_ids; c++) {
         err  = clSetKernelArg(kernel, arg_idx++, sizeof(cl_mem), &cl_buffers[input_buffer_ids[c]]);
 
         // The input buffer size may be needed.
@@ -276,19 +280,23 @@ void ExecuteKernelAllSizeParams(unsigned int kernel_id, std::vector<unsigned int
 
     }
 
-    err = clSetKernelArg(kernel, arg_idx++, sizeof(cl_mem), &cl_buffers[output_buffer_id]);
+    // Do we assume the output buffer size is the last buffer used?
+
+
+
+    //err = clSetKernelArg(kernel, arg_idx++, sizeof(cl_mem), &cl_buffers[output_buffer_id]);
 
     // The size of the execution?
 
     // look at the size of the 1st buffer for the moment?
     //  Maybe the last buffer?
 
-    cout << "cl_buffer_sizes[output_buffer_id] " << (unsigned int)cl_buffer_sizes[output_buffer_id] << endl;
+    //cout << "cl_buffer_sizes[output_buffer_id] " << (unsigned int)cl_buffer_sizes[output_buffer_id] << endl;
 
     // The last kernel arg should be the number of items in the output buffer.
 
 
-    num_items = cl_buffer_sizes[output_buffer_id] / sizeof(float);
+    //num_items = cl_buffer_sizes[output_buffer_id] / sizeof(float);
     cout << "num_items " << num_items << endl;
 
 
@@ -299,7 +307,7 @@ void ExecuteKernelAllSizeParams(unsigned int kernel_id, std::vector<unsigned int
 
     //cout << "cl_buffer_sizes[output_buffer_id] " << cl_buffer_sizes[output_buffer_id] << endl;
 
-    globalSize = ceil(cl_buffer_sizes[output_buffer_id]/(float)localSize)*localSize;
+    globalSize = ceil(cl_buffer_sizes[input_buffer_ids[c - 1]]/(float)localSize)*localSize;
 
     // More precise control over the size?
 
@@ -1117,7 +1125,8 @@ NAN_METHOD(MyObject::NAN_ExecuteKernelAllSizeParams) {
 
   output_buffer_id = map_buffer_indexes_by_name[output_buffer_name];
 
-  ExecuteKernelAllSizeParams(kernel_id, input_buffer_ids, output_buffer_id);
+  //ExecuteKernelAllSizeParams(kernel_id, input_buffer_ids, output_buffer_id);
+  ExecuteKernelAllSizeParams(kernel_id, input_buffer_ids);
   NanReturnValue(NanNew(1));
 
 }

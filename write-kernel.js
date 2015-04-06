@@ -2,12 +2,18 @@ var jsgui = require('../../ws/js/core/jsgui-lang-essentials');
 var each = jsgui.eac;
 
 var map_cl_param_types = {
-  'Float32Array': 'float *'
+  'Float32Array': 'float *',
+  'Uint32Array': 'unsigned int *',
+  'Uint64Array': 'unsigned long *',
+
 }
 
+var Uint64Array = {};
 
 
-var write_kernel_all_size_params = function(name, input_parameters, output_parameter, source) {
+// And don't have specific output buffers / parameters.
+
+var write_kernel_all_size_params = function(name, input_parameters, source) {
   var str_res = '#pragma OPENCL EXTENSION cl_khr_fp64 : enable \n';
   var param_name, param_type, str_param_type, cl_param_type;
 
@@ -19,6 +25,9 @@ var write_kernel_all_size_params = function(name, input_parameters, output_param
     param_type = arr_param[1];
 
     if (param_type === Float32Array) str_param_type = 'Float32Array';
+    if (param_type === Uint32Array) str_param_type = 'Uint32Array';
+    if (param_type === Uint64Array) str_param_type = 'Uint64Array';
+    //Uint32Array
 
     cl_param_type = map_cl_param_types[str_param_type];
 
@@ -35,12 +44,19 @@ var write_kernel_all_size_params = function(name, input_parameters, output_param
   });
 
   //str_res +=
+
+  /*
   param_name = output_parameter[0];
   param_type = output_parameter[1];
 
   cl_param_type = map_cl_param_types[str_param_type];
+
+
+
   str_res += '\t__global ';
   str_res += cl_param_type + param_name + ',\n';
+  */
+
   str_res += 'const unsigned int n)\n';
   str_res += '{\n';
   str_res += '\tint id = get_global_id(0);\n';

@@ -7,138 +7,47 @@ var mod_write_kernel = require('./write-kernel');
 var write_kernel_all_size_params = mod_write_kernel.write_kernel_all_size_params;
 var write_kernel = mod_write_kernel.write_kernel;
 
-// Perhaps running a kernel just once (or on one set of data) will not be so useful.
-// Run kernel over set, get results, repeat...
+var size = 250000000;
+//var size = 16;
 
+var reduction_factor = 16;
 
-// With averages, need somewhere to write the result.
-// averages, need to do a for loop.
+var a = smalloc.alloc(size, smalloc.Types.Float);
+var c;
+for (c = 0; c < size; c++) {
+    //a[c] = c * 4 + 1;
 
-// Number of items in the range handled by each execution...
+    //if (c % 16 === 0) {
+    //  a[c] = c * 4;
+    //} else {
+    //  a[c] = c ^ 2;
+    //}
 
-//var k2s = write_kernel('vecAdd', [['a', Float32Array], ['b', Float32Array]], ['res', Float32Array], `
-//  res[id] = a[id] + b[id];
-//`);
+    a[c] = c * 2 * c;
 
-/*
-var k2s = write_kernel('reduce_16_average', [['a', Float32Array]], ['res', Float32Array], `
-  float total = 0;
-  int p;
-  for (int c = 0; c < 16; c++) {
-    p = id * 16;
-    total += a[p + c];
-  }
-  res[id] = total + 1;
-`);
-*/
-
-
-// What about a general case?
-//var size = 163840 * 3;
-
-// Looks like the accumulator can't handle this so well when using very big numbers.
-
-//var size = 2000;
-var size = 100000;
-
-var reduction_factor = 32;
+    //b[c] = c * 2;
+    //res[c] = 0;
+}
 
 // 17, reduced by a factor of 128 would go to 1
 
 
 var k3s;
 
-// If we need to account for data that can not be divided evenly by the reduction factor,
-//  we need a way of the kernel telling if a result index can not get complete data from the
+// Could have a counted reduce function.
+//  Also sets output buffer showing how many operations took place.
 
-// Don't think we should read the size because it's only for the first reduction.
-//  Would definitely be easier if we can say what number it's reducing from and to.
-//  Can't just rely on the reduction factor to calculate.
+// and this also takes the counts from the input.
+// so it needs to be given two buffers to get the values from.
 
-// Maybe the simpler system could average large chunks of numbers, but only work on multiples of 128 or such.
+// Some buffers need to be integer, some need to be floating point.
 
-// However, for general purpose reduction kernels, it's probably making the kernel code aware of how many it's reducing from and to.
-// Possibly similar with expansion kernels. Maybe they would be the same even. Different number of outputs to inputs, kernel handles it.
-
-// Not so sure that the code should read the buffer size and make assumptions about the size of the calculation.
+// I think counted data structures would be good for this.
+//  Or conventions
+//  So that when calculating the total or average, or doing another reduce operation, we keep track of how many input results were processed.
 
 
-// A_B Reduce?
-//  Only give it the size of one input vector...?
-
-// Though is it possible to get more information into the function as standard or as an easy option?
-//  not specify reduction necessarily?
-
-// Kernels that include data on all the buffer sizes?
-//  Or problem sizes?
-
-// A kernel with the sizes of all the buffers.
-// Does not need to differentiate between input and output buffers / memory
-//  Should have the sizes of the various buffers that are part of the task.
-
-// Then would need to include the weighting factor in the results.
-//  Not really sure this will be as fast now.
-//  And should it return two buffers?
-//  Or include the weights with the buffers...
-
-// Then next time around the algorithm would need to make use of the weights while doing the calculation.
-// Does seem so much simpler to do a reduce which has got the right number of elements for the right size array.
-
-// Although less efficient than using the right number to start with, a reduction kernel that provides the weights / the number of items each
-// result is based on.
-
-
-// Maybe a good algorithm would find the nearest multiple of 128^2?
-
-// Also averages may be most useful on a seriously big input.
-
-// Perhaps we call an averaging function that operates on the subset?
-
-
-// Anyway, do the weighted system.
-
-
-// non-weighted input to weighted output...
-// then would be carring out the reduce again on weighted input.
-
-// Then in the next pass we use those weights in calculating the next set of averages.
-
-// Need to have an output set that's twice as big.
-
-// For the moment, a reduction factor of 128 seems appropriate.
-
-// However, when not so many items go into the calculation we'll need to use some weightings
-
-// weighted_output_reduce_128_average
-//  reduces by a factor of 128, but also includes the number of input items that went into any result value
-//  So the next stage could take an average of weighted inputs.
-//  And reduce from them, perhaps providing weighted outputs?
-
-
-// If we are doing a reduce_128 and there are not 128 items, we can note that down and still provide an answer.
-
-// Is 128 too big a sacling factor for the double precision accumulators to work?
-
-// Want to do another reduce on the data produced by the first reduce.
-
-// Seems like this accumulates inaccuracy.
-//  Perhaps this could accumulate the total numbers with only one division for the average at the end.
-
-// So after each stage, would have the total.
-
-// Perhaps a kernel to total the numbers would be better.
-//  Then at the end we calculate the average.
-
-
-
-
-// The kernel could take a reduction factor as a parameter.
-// Or JavaScript can be used to hard-code it.
-
-
-
-
-var k_weighted_reduce_128_average = write_kernel_all_size_params('weighted_reduce_128_total', [['a', Float32Array]], ['res', Float32Array], `
+var k_weighted_reduce_128_average = write_kernel_all_size_params('weighted_reduce_128_total', [['a', Float32Array], ['a_counts', Uint32Array], ['res', Float32Array], ['input_counts', Uint32Array]], `
 
 
   //float total = 0;
@@ -155,28 +64,24 @@ var k_weighted_reduce_128_average = write_kernel_all_size_params('weighted_reduc
   // could add a weighted amount to the total?
   //  somehow make the calculation more precise.
 
-  int a_max = size_a / 2;
-  int _2p2;
+  //int a_max = size_a / 2;
+  //int _2p2;
+  int c;
 
-  for (int c = 0; c < ` + reduction_factor + `; c++) {
+  for (c = 0; c < ` + reduction_factor + `; c++) {
     p2 = p + c;
-    _2p2 = p2 * 2;
+    //_2p2 = p2 * 2;
 
-    if (p2 < a_max) {
+    if (p2 < size_a) {
 
       // Then we act.
       //  I think we may have a structure for a reduce kernel.
       //  So we could do write_reduce_kernel.
       //  We have access to the sizes, and the inner loop.
 
-      total += a[_2p2];
-      processed_input_count += a[_2p2 + 1];
+      total += a[p2];
+      processed_input_count += a_counts[id];
     }
-
-    //if (2 < n) {
-    //  total += a[p2];
-    //  c2++;
-    //}
 
   }
   //res[id * 2] = 3;
@@ -184,14 +89,19 @@ var k_weighted_reduce_128_average = write_kernel_all_size_params('weighted_reduc
   //res[id] = total / 128;
 
 
-  res[id * 2] = total;
-  res[id * 2 + 1] = processed_input_count;
+  //res[id * 2] = total;
+  //res[id * 2 + 1] = processed_input_count;
+
+  res[id] = total;
+  input_counts[id] = processed_input_count;
+
 `);
 
 // So this would count how many values were included.
 
+// We don't have the counts with the starting item.
 
-var k_weighted_output_reduce_128_average = write_kernel_all_size_params('weighted_output_reduce_128_total', [['a', Float32Array]], ['res', Float32Array], `
+var k_weighted_output_reduce_128_average = write_kernel_all_size_params('weighted_output_reduce_128_total', [['a', Float32Array], ['res', Float32Array], ['input_counts', Uint32Array]], `
 
 
   //float total = 0;
@@ -218,13 +128,13 @@ var k_weighted_output_reduce_128_average = write_kernel_all_size_params('weighte
 
   }
 
-  res[id * 2] = total;
-  res[id * 2 + 1] = processed_input_count;
+  res[id] = total;
+  input_counts[id] = processed_input_count;
 `);
 
 
 
-var k_reduce_16_average = write_kernel_all_size_params('reduce_16_average', [['a', Float32Array]], ['res', Float32Array], `
+var k_reduce_16_average = write_kernel_all_size_params('reduce_16_average', [['a', Float32Array], ['res', Float32Array]], `
   //float total = 0;
   float total = 0;
   int c2 = 0;
@@ -334,7 +244,52 @@ console.log('kernelSource', kernelSource);
 
 
 
+// can have an algorithm to set up the reduction stages.
 
+var popencl = new POpenCL();
+
+
+
+
+
+
+
+var stage_size = size;
+var stage_reduced_size;
+
+
+var n_stage = 0;
+var stage_sizes = [];
+var stage_results = [];
+var stage_input_count_buffers = [];
+
+stage_sizes.push(size);
+popencl.add_buffer('A', size);
+
+
+while (stage_size > 1) {
+  stage_reduced_size = Math.ceil(stage_size / reduction_factor);
+  console.log('stage_reduced_size', stage_reduced_size);
+
+  stage_results.push(smalloc.alloc(stage_reduced_size, smalloc.Types.Float));
+  stage_input_count_buffers.push(smalloc.alloc(stage_reduced_size, smalloc.Types.Uint32));
+
+  console.log('n_stage', n_stage);
+
+  popencl.add_buffer('Res_' + n_stage, stage_reduced_size);
+  popencl.add_buffer('Res_' + n_stage + '_input_counts', stage_reduced_size);
+
+  stage_size = stage_reduced_size;
+  n_stage++;
+}
+n_stage--;
+
+
+
+
+
+
+/*
 
 
 
@@ -349,18 +304,25 @@ var reduced_2 = Math.ceil(reduced_1 / reduction_factor);
 var reduced_3 = Math.ceil(reduced_2 / reduction_factor);
 var reduced_4 = Math.ceil(reduced_3 / reduction_factor);
 console.log('reduced_3', reduced_3);
+*/
 
-var a = smalloc.alloc(size, smalloc.Types.Float);
 //var b = smalloc.alloc(size, smalloc.Types.Float);
 
 // * 2 so it holds weights / counts
-var res = smalloc.alloc(reduced_1 * 2, smalloc.Types.Float);
+
+/*
+
+var res = smalloc.alloc(reduced_1, smalloc.Types.Float);
+
+// Uint32
+
+var res_input_counts = smalloc.alloc(reduced_1, smalloc.Types.Uint32);
 
 var res2 = smalloc.alloc(reduced_2 * 2, smalloc.Types.Float);
 var res3 = smalloc.alloc(reduced_3 * 2, smalloc.Types.Float);
 var res4 = smalloc.alloc(reduced_4 * 2, smalloc.Types.Float);
 
-
+*/
 
 /*
 var c;
@@ -371,37 +333,14 @@ for (c = 0; c < size; c++) {
 }
 
 */
-var c;
-for (c = 0; c < size; c++) {
-    //a[c] = c * 4 + 1;
 
-    if (c % 16 === 0) {
-      a[c] = 1;
-    } else {
-      a[c] = 1;
-    }
-
-
-
-
-    //b[c] = c * 2;
-    //res[c] = 0;
-}
 // We can give it the kernel.
-var popencl = new POpenCL();
 
 
-//console.log('a', a);
 
-
-popencl.add_buffer('A', size);
-//popencl.add_buffer('B', size);
-
-
-popencl.add_buffer('Res', reduced_1 * 2);
-popencl.add_buffer('Res2', reduced_2 * 2);
-popencl.add_buffer('Res3', reduced_3 * 2);
-popencl.add_buffer('Res4', reduced_4 * 2);
+//popencl.add_buffer('Res2', reduced_2 * 2);
+//popencl.add_buffer('Res3', reduced_3 * 2);
+//popencl.add_buffer('Res4', reduced_4 * 2);
 
 
 popencl.add_kernel('weighted_output_reduce_128_total', kernelSource);
@@ -410,6 +349,8 @@ popencl.add_kernel('weighted_reduce_128_total', k_weighted_reduce_128_average);
 
 // Let's set the first two buffers.
 popencl.set_buffer('A', a);
+
+
 //popencl.set_buffer('B', b);
 // Queue input buffers, single output buffer.
 //  Only will be one output buffer I think.
@@ -418,13 +359,22 @@ var start_time = process.hrtime();
 
 // First reduction, factor of 128, but it's not necessary to have the full 128 items, or have a number of items that's divisible by 128.
 
-popencl.execute_kernel_all_size_params('weighted_output_reduce_128_total', ['A'], 'Res');
-popencl.execute_kernel_all_size_params('weighted_reduce_128_total', ['Res'], 'Res2');
+popencl.execute_kernel_all_size_params('weighted_output_reduce_128_total', ['A', 'Res_0', 'Res_0_input_counts']);
+
+var level = 1;
+
+while (level <= n_stage) {
+  var prev_level = level - 1;
+  popencl.execute_kernel_all_size_params('weighted_reduce_128_total', ['Res_' + prev_level, 'Res_' + prev_level + '_input_counts', 'Res_' + level, 'Res_' + level + '_input_counts']);
+  level++;
+}
 
 
 
-popencl.execute_kernel_all_size_params('weighted_reduce_128_total', ['Res2'], 'Res3');
-popencl.execute_kernel_all_size_params('weighted_reduce_128_total', ['Res3'], 'Res4');
+
+
+//popencl.execute_kernel_all_size_params('weighted_reduce_128_total', ['Res2'], 'Res3');
+//popencl.execute_kernel_all_size_params('weighted_reduce_128_total', ['Res3'], 'Res4');
 
 
 // weighted_reduce_128_average
@@ -457,17 +407,38 @@ popencl.execute_kernel_all_size_params('weighted_reduce_128_total', ['Res3'], 'R
 var time_diff = process.hrtime(start_time);
 //popencl.vector_add(a, b, res);
 //popencl.execute_kernel(['A', 'B'], ['Res']);
-popencl.get_buffer('Res', res);
-popencl.get_buffer('Res2', res2);
-popencl.get_buffer('Res3', res3);
-popencl.get_buffer('Res4', res4);
+popencl.get_buffer('Res_0', stage_results[0]);
+popencl.get_buffer('Res_0_input_counts', stage_input_count_buffers[0]);
+popencl.get_buffer('Res_1', stage_results[1]);
+popencl.get_buffer('Res_1_input_counts', stage_input_count_buffers[1]);
+
+
+console.log('n_stage', n_stage);
+//
+
+
+
+//popencl.get_buffer('Res2', res2);
+//popencl.get_buffer('Res3', res3);
+//popencl.get_buffer('Res4', res4);
 // Then let's execute the kernel on the buffer.
 //console.log('res', res);
 console.log('time_diff', time_diff);
-//console.log('res', res);
+//console.log('stage_results[0]', stage_results[0]);
+//console.log('stage_input_count_buffers[0]', stage_input_count_buffers[0]);
+//console.log('stage_results[1]', stage_results[1]);
+//console.log('stage_input_count_buffers[1]', stage_input_count_buffers[1]);
 //console.log('res2', res2);
 //console.log('res3', res3);
-console.log('res4', res4);
+//console.log('res4', res4);
+
+popencl.get_buffer('Res_' + n_stage, stage_results[n_stage]);
+
+var last_res_buffer = stage_results[n_stage];
+
+console.log('last_res_buffer[0]', last_res_buffer[0]);
+
+
 
 
 // And deallocate buffers and kernels in popencl.
