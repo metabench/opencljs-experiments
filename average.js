@@ -65,13 +65,15 @@ var k3s;
 
 // This kind of reduce function could be expressed simply too.
 
-var k_weighted_output_reduce_average = write_counted_output_reduction_kernel('weighted_output_reduce_average', Float32Array, reduction_factor,
+var k_weighted_output_reduce_average = write_counted_output_reduction_kernel('weighted_output_reduce_average',
+  Float32Array, reduction_factor,
   /* prepare    */ `double total = 0;`,
   /* repeat     */ `total += val;`,
   /* conclude   */ `return total / processed_input_count;`
 );
 
-var k_weighted_reduce_average = write_counted_reduction_kernel('weighted_reduce_average', Float32Array, reduction_factor,
+var k_weighted_reduce_average = write_counted_reduction_kernel('weighted_reduce_average',
+  Float32Array, reduction_factor,
   /* prepare    */ `double accumulated_mean = 0;`,
   /* repeat     */ `accumulated_mean += val * val_input_count / processed_input_count;`,
   /* conclude   */ `return accumulated_mean;`);
