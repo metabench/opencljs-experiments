@@ -35,7 +35,12 @@ var transpile = function(str) {
 }
 
 var write_counted_reduction_kernels = function(name, type, reduction_factor, preparer, repeater, concluder) {
-  return [write_counted_output_reduction_kernel(replace(name, 'weighted_reduce', 'weighted_output_reduce'), type, reduction_factor, preparer, repeater, concluder),
+  var counted_output_only_name = replace(name, 'weighted_reduce', 'weighted_output_reduce');
+  counted_output_only_name = replace(counted_output_only_name, 'counted_reduce', 'counted_output_reduce');
+
+
+
+  return [write_counted_output_reduction_kernel(counted_output_only_name, type, reduction_factor, preparer, repeater, concluder),
     write_counted_reduction_kernel(name, type, reduction_factor, preparer, repeater, concluder)];
 }
 
@@ -78,7 +83,7 @@ var write_counted_output_reduction_kernel = function(name, type, reduction_facto
   preparer = transpile(preparer);
   repeater = transpile(repeater);
   concluder = transpile(concluder);
-  
+
   var res = write_kernel_all_size_params(name, [['input', type], ['output', type], ['output_input_counts', Uint32Array]],
   `int processed_input_count = 0;
   int p = id * ` + reduction_factor + `;
