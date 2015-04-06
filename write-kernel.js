@@ -34,7 +34,10 @@ var transpile = function(str) {
   return str;
 }
 
-
+var write_counted_reduction_kernels = function(name, type, reduction_factor, preparer, repeater, concluder) {
+  return [write_counted_output_reduction_kernel(replace(name, 'weighted_reduce', 'weighted_output_reduce'), type, reduction_factor, preparer, repeater, concluder),
+    write_counted_reduction_kernel(name, type, reduction_factor, preparer, repeater, concluder)];
+}
 
 
 
@@ -72,7 +75,10 @@ var write_counted_reduction_kernel = function(name, type, reduction_factor, prep
 }
 
 var write_counted_output_reduction_kernel = function(name, type, reduction_factor, preparer, repeater, concluder) {
-
+  preparer = transpile(preparer);
+  repeater = transpile(repeater);
+  concluder = transpile(concluder);
+  
   var res = write_kernel_all_size_params(name, [['input', type], ['output', type], ['output_input_counts', Uint32Array]],
   `int processed_input_count = 0;
   int p = id * ` + reduction_factor + `;
@@ -195,5 +201,6 @@ module.exports = {
   'write_kernel_all_size_params': write_kernel_all_size_params,
   'write_counted_reduction_kernel': write_counted_reduction_kernel,
   'write_counted_output_reduction_kernel': write_counted_output_reduction_kernel,
+  'write_counted_reduction_kernels': write_counted_reduction_kernels,
   'Uint64Array': Uint64Array
 };

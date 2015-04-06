@@ -5,6 +5,8 @@ var each = jsgui.eac;
 
 var mod_write_kernel = require('./write-kernel');
 
+var write_counted_reduction_kernels = mod_write_kernel.write_counted_reduction_kernels;
+
 var write_counted_reduction_kernel = mod_write_kernel.write_counted_reduction_kernel;
 var write_counted_output_reduction_kernel = mod_write_kernel.write_counted_output_reduction_kernel;
 var write_kernel_all_size_params = mod_write_kernel.write_kernel_all_size_params;
@@ -72,25 +74,45 @@ var k3s;
 //  Probably want an easier abstraction to do this?
 //  Keep reducing the amount of code needed, and complexity of it to the essentials.
 
+//var k_weighted_output_reduce_average = write_counted_output_reduction_kernel('weighted_output_reduce_average', Float32Array, reduction_factor,
+//  /* prepare    */ `double max = -INFINITY;`,
+//  /* repeat     */ `if(val > max) max = val;`,
+//  /* conclude   */ `return max;`
+//);
 
+//var k_weighted_reduce_average = write_counted_reduction_kernel('weighted_reduce_average', Float32Array, reduction_factor,
+///* prepare    */ `double max = -INFINITY;`,
+///* repeat     */ `if(val > max) max = val;`,
+///* conclude   */ `return max;`
+//);
 
-
-var k_weighted_output_reduce_average = write_counted_output_reduction_kernel('weighted_output_reduce_average', Float32Array, reduction_factor,
-  /* prepare    */ `double max = -INFINITY;`,
-  /* repeat     */ `if(input[p2] > max) max = input[p2];`,
-  /* conclude   */ `output[id] = max;`
-);
-
-var k_weighted_reduce_average = write_counted_reduction_kernel('weighted_reduce_average', Float32Array, reduction_factor,
+var ks_reduce_average = write_counted_reduction_kernels('weighted_reduce_average', Float32Array, reduction_factor,
 /* prepare    */ `double max = -INFINITY;`,
-/* repeat     */ `if(input[p2] > max) max = input[p2];`,
-/* conclude   */ `output[id] = max;`
+/* repeat     */ `if(val > max) max = val;`,
+/* conclude   */ `return max;`
 );
 
+var k_weighted_output_reduce_average = ks_reduce_average[0];
+var k_weighted_reduce_average = ks_reduce_average[1];
 
 
 
-var kernelSource = k_weighted_output_reduce_average;
+
+//var k_weighted_output_reduce_average = write_counted_output_reduction_kernel('weighted_output_reduce_average', Float32Array, reduction_factor,
+//  /* prepare    */ `double max = -INFINITY;`,
+//  /* repeat     */ `if(val > max) max = val;`,
+//  /* conclude   */ `return max;`
+//);
+
+
+//var k_weighted_reduce_average = write_counted_reduction_kernel('weighted_reduce_average', Float32Array, reduction_factor,
+///* prepare    */ `double max = -INFINITY;`,
+///* repeat     */ `if(val > max) max = val;`,
+///* conclude   */ `return max;`
+//);
+//console.log('k_weighted_output_reduce_average', k_weighted_output_reduce_average);
+//console.log('k_weighted_reduce_average', k_weighted_reduce_average);
+//var kernelSource = k_weighted_output_reduce_average;
 
 var popencl = new POpenCL();
 
@@ -122,7 +144,7 @@ while (stage_size > 1) {
 }
 n_stage--;
 
-popencl.add_kernel('weighted_output_reduce_average', kernelSource);
+popencl.add_kernel('weighted_output_reduce_average', k_weighted_output_reduce_average);
 popencl.add_kernel('weighted_reduce_average', k_weighted_reduce_average);
 
 // Let's set the first two buffers.
