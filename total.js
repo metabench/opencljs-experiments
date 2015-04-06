@@ -7,10 +7,13 @@ var mod_write_kernel = require('./write-kernel');
 var write_kernel_all_size_params = mod_write_kernel.write_kernel_all_size_params;
 var write_kernel = mod_write_kernel.write_kernel;
 
-var size = 250000000;
+//var size = 250000000;
+
+var size = 1000;
+
 //var size = 16;
 
-var reduction_factor = 16;
+var reduction_factor = 64;
 
 var a = smalloc.alloc(size, smalloc.Types.Float);
 var c;
@@ -23,7 +26,8 @@ for (c = 0; c < size; c++) {
     //  a[c] = c ^ 2;
     //}
 
-    a[c] = c * 2 * c;
+    //a[c] = c * 2 * c;
+    a[c] = 1;
 
     //b[c] = c * 2;
     //res[c] = 0;
@@ -80,7 +84,7 @@ var k_weighted_reduce_128_average = write_kernel_all_size_params('weighted_reduc
       //  We have access to the sizes, and the inner loop.
 
       total += a[p2];
-      processed_input_count += a_counts[id];
+      processed_input_count += a_counts[p2];
     }
 
   }
@@ -424,19 +428,22 @@ console.log('n_stage', n_stage);
 // Then let's execute the kernel on the buffer.
 //console.log('res', res);
 console.log('time_diff', time_diff);
-//console.log('stage_results[0]', stage_results[0]);
-//console.log('stage_input_count_buffers[0]', stage_input_count_buffers[0]);
-//console.log('stage_results[1]', stage_results[1]);
-//console.log('stage_input_count_buffers[1]', stage_input_count_buffers[1]);
+console.log('stage_results[0]', stage_results[0]);
+console.log('stage_input_count_buffers[0]', stage_input_count_buffers[0]);
+console.log('stage_results[1]', stage_results[1]);
+console.log('stage_input_count_buffers[1]', stage_input_count_buffers[1]);
 //console.log('res2', res2);
 //console.log('res3', res3);
 //console.log('res4', res4);
 
 popencl.get_buffer('Res_' + n_stage, stage_results[n_stage]);
+popencl.get_buffer('Res_' + n_stage + '_input_counts', stage_input_count_buffers[n_stage]);
 
 var last_res_buffer = stage_results[n_stage];
+var last_input_count_buffers = stage_input_count_buffers[n_stage];
 
 console.log('last_res_buffer[0]', last_res_buffer[0]);
+console.log('last_input_count_buffers[0]', last_input_count_buffers[0]);
 
 
 
