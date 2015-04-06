@@ -63,20 +63,20 @@ var k3s;
 // Maybe want some kind of a template for this function too
 //  How it knows the processed_input_count.
 
-
 // This kind of reduce function could be expressed simply too.
-
-var k_weighted_reduce_average = write_counted_reduction_kernel('weighted_reduce_average', Float32Array, reduction_factor,
-
-  /* prepare    */ `double accumulated_mean = 0;`,
-  /* repeat     */ `accumulated_mean += input[p2] * input_counts[p2] / processed_input_count;`,
-  /* conclude   */ `output[id] = accumulated_mean;`);
 
 var k_weighted_output_reduce_average = write_counted_output_reduction_kernel('weighted_output_reduce_average', Float32Array, reduction_factor,
   /* prepare    */ `double total = 0;`,
-  /* repeat     */ `total += input[p2];`,
-  /* conclude   */ `output[id] = total / processed_input_count;`
+  /* repeat     */ `total += val;`,
+  /* conclude   */ `return total / processed_input_count;`
 );
+
+var k_weighted_reduce_average = write_counted_reduction_kernel('weighted_reduce_average', Float32Array, reduction_factor,
+  /* prepare    */ `double accumulated_mean = 0;`,
+  /* repeat     */ `accumulated_mean += val * val_input_count / processed_input_count;`,
+  /* conclude   */ `return accumulated_mean;`);
+
+
 
 
 var kernelSource = k_weighted_output_reduce_average;
@@ -126,7 +126,12 @@ var level = 1;
 
 while (level <= n_stage) {
   var prev_level = level - 1;
-  popencl.execute_kernel_all_size_params('weighted_reduce_average', ['Res_' + prev_level, 'Res_' + prev_level + '_input_counts', 'Res_' + level, 'Res_' + level + '_input_counts']);
+  popencl.execute_kernel_all_size_params('weighted_reduce_average', [
+    'Res_' + prev_level,
+    'Res_' + prev_level + '_input_counts',
+    'Res_' + level,
+    'Res_' + level + '_input_counts'
+  ]);
   level++;
 }
 

@@ -10,8 +10,40 @@ var map_cl_param_types = {
 
 var Uint64Array = {};
 
+// I think we'll want to filter code as well.
+//  Use split and join for replacements.
+
+var replace = function(str, target, replacement) {
+  return str.split(target).join(replacement);
+}
+
+var transpile = function(str) {
+  str = replace(str, 'return ', 'res = ');
+
+  str = replace(str, 'res', 'output[id]');
+
+  str = replace(str, 'value_input_count', 'input_counts[p2]');
+  str = replace(str, 'val_input_count', 'input_counts[p2]');
+  // input_counts[p2]
+
+  str = replace(str, 'value', 'input[p2]');
+  str = replace(str, 'val', 'input[p2]');
+
+  //input[p2]
+
+  return str;
+}
+
+
+
+
 
 var write_counted_reduction_kernel = function(name, type, reduction_factor, preparer, repeater, concluder) {
+  preparer = transpile(preparer);
+  repeater = transpile(repeater);
+  concluder = transpile(concluder);
+
+
   var res = write_kernel_all_size_params(name,
   [['input', type], ['input_counts', Uint32Array],
   ['output', type], ['output_input_counts', Uint32Array]],
