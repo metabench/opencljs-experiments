@@ -247,7 +247,7 @@ void ExecuteKernelAllSizeParams(unsigned int kernel_id, std::vector<unsigned int
     //  So we have one execution per result item.
 
 
-    cout << "ExecuteKernelAllSizeParams" << endl;
+    //cout << "ExecuteKernelAllSizeParams" << endl;
 
     // Though maybe we should be specifying the size in bytes here.
 
@@ -272,7 +272,7 @@ void ExecuteKernelAllSizeParams(unsigned int kernel_id, std::vector<unsigned int
         // Will make a different version of execute that provides the sizes of various buffers as const parameters.
         //  With reduce functions, may need to check that the input bounds are not exceeded.
 
-        cout << "cl_buffer_sizes[input_buffer_ids[c]] / sizeof(float) " << cl_buffer_sizes[input_buffer_ids[c]] / sizeof(float) << endl;
+        //cout << "cl_buffer_sizes[input_buffer_ids[c]] / sizeof(float) " << cl_buffer_sizes[input_buffer_ids[c]] / sizeof(float) << endl;
 
         num_items = cl_buffer_sizes[input_buffer_ids[c]] / sizeof(float);
 
@@ -297,7 +297,7 @@ void ExecuteKernelAllSizeParams(unsigned int kernel_id, std::vector<unsigned int
 
 
     //num_items = cl_buffer_sizes[output_buffer_id] / sizeof(float);
-    cout << "num_items " << num_items << endl;
+    //cout << "num_items " << num_items << endl;
 
 
     //err = clSetKernelArg(kernel, arg_idx++, sizeof(unsigned int), &cl_buffer_sizes[output_buffer_id]);
@@ -311,8 +311,8 @@ void ExecuteKernelAllSizeParams(unsigned int kernel_id, std::vector<unsigned int
 
     // More precise control over the size?
 
-    cout << "globalSize " << globalSize << endl;
-    cout << "localSize " << localSize << endl;
+    //cout << "globalSize " << globalSize << endl;
+    //cout << "localSize " << localSize << endl;
 
     // However, if running a reduction algorithm...
     //  We do use the sizes from the output buffer.

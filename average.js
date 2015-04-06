@@ -10,13 +10,16 @@ var write_kernel = mod_write_kernel.write_kernel;
 var size = 120000000;
 
 //var size = 1000;
-
+// 21829262
+// 51286125
 //var size = 16;
 
 var reduction_factor = 8;
+console.log('initializing data');
 
 var a = smalloc.alloc(size, smalloc.Types.Float);
 var c;
+var start_time = process.hrtime();
 for (c = 0; c < size; c++) {
     //a[c] = c * 4 + 1;
 
@@ -33,9 +36,9 @@ for (c = 0; c < size; c++) {
     //b[c] = c * 2;
     //res[c] = 0;
 }
-
+var time_diff = process.hrtime(start_time);
 // 17, reduced by a factor of 128 would go to 1
-
+console.log('JavaScript init data time: ', time_diff);
 
 var k3s;
 
@@ -249,7 +252,7 @@ k3s = write_kernel('reduce_16_average', [['a', Float32Array]], ['res', Float32Ar
 
 var kernelSource = k_weighted_output_reduce_128_average;
 
-console.log('kernelSource', kernelSource);
+//console.log('kernelSource', kernelSource);
 
 // First reduction down to 9...
 // Worth calculating the remainder as well.
@@ -389,7 +392,7 @@ popencl.set_buffer('A', a);
 //popencl.set_buffer('B', b);
 // Queue input buffers, single output buffer.
 //  Only will be one output buffer I think.
-var start_time = process.hrtime();
+start_time = process.hrtime();
 
 
 // First reduction, factor of 128, but it's not necessary to have the full 128 items, or have a number of items that's divisible by 128.
@@ -436,7 +439,7 @@ while (level <= n_stage) {
 
 
 
-var time_diff = process.hrtime(start_time);
+time_diff = process.hrtime(start_time);
 //popencl.vector_add(a, b, res);
 //popencl.execute_kernel(['A', 'B'], ['Res']);
 popencl.get_buffer('Res_0', stage_results[0]);
