@@ -15,7 +15,7 @@ var write_kernel_all_size_params = mod_write_kernel.write_kernel_all_size_params
 var write_kernel = mod_write_kernel.write_kernel;
 
 var size = 120000000;
-
+var popencl = new POpenCL();
 //var size = 1000;
 // 21829262
 // 51286125
@@ -42,46 +42,15 @@ console.log('JavaScript init data time: ', time_diff);
 
 var k3s;
 
-var ks_reduce_min = write_counted_reduction_kernels('counted_reduce_min', Float32Array, reduction_factor,
+popencl.add_counted_reduction_kernels('counted_reduce_min', Float32Array, reduction_factor,
 /* prepare    */ `double min = INFINITY;`,
 /* repeat     */ `if(val < min) min = val;`,
-/* conclude   */ `return min;`
-);
-
-var k_weighted_output_reduce_min = ks_reduce_min[0][1];
-var k_weighted_reduce_min = ks_reduce_min[1][1];
-
-
-var popencl = new POpenCL();
+/* conclude   */ `return min;`);
 
 var stage_size = size;
 var stage_reduced_size;
 
-//var n_stage = 0;
-//var stage_sizes = [];
-
-
-//stage_sizes.push(size);
-popencl.add_buffer('A', size);
-
-/*
-while (stage_size > 1) {
-  stage_reduced_size = Math.ceil(stage_size / reduction_factor);
-  console.log('stage_reduced_size', stage_reduced_size);
-
-  stage_results.push(smalloc.alloc(stage_reduced_size, smalloc.Types.Float));
-  stage_input_count_buffers.push(smalloc.alloc(stage_reduced_size, smalloc.Types.Uint32));
-
-  console.log('n_stage', n_stage);
-
-  popencl.add_buffer('res_' + n_stage, stage_reduced_size);
-  popencl.add_buffer('res_' + n_stage + '_input_counts', stage_reduced_size);
-
-  stage_size = stage_reduced_size;
-  n_stage++;
-}
-n_stage--;
-*/
+popencl.add_buffer('a', size);
 
 var res_setup_buffers = popencl.setup_reduction_buffers('res', smalloc.Types.Float, stage_size, reduction_factor);
 
@@ -91,17 +60,13 @@ var stage_input_count_buffers = res_setup_buffers[2];
 
 var n_stage = stage_sizes.length - 1;
 
-
-popencl.add_kernel('counted_output_reduce_min', k_weighted_output_reduce_min);
-popencl.add_kernel('counted_reduce_min', k_weighted_reduce_min);
-
 // Let's set the first two buffers.
-popencl.set_buffer('A', a);
+popencl.set_buffer('a', a);
 
 start_time = process.hrtime();
 // First reduction, factor of 128, but it's not necessary to have the full 128 items, or have a number of items that's divisible by 128.
 
-popencl.execute_kernel_all_size_params('counted_output_reduce_min', ['A', 'res_0', 'res_0_input_counts']);
+popencl.execute_kernel_all_size_params('counted_output_reduce_min', ['a', 'res_0', 'res_0_input_counts']);
 
 var level = 1;
 
@@ -112,13 +77,7 @@ while (level <= n_stage) {
 }
 
 time_diff = process.hrtime(start_time);
-//popencl.vector_add(a, b, res);
-//popencl.execute_kernel(['A', 'B'], ['res']);
 
-//popencl.get_buffer('res_0', stage_results[0]);
-//popencl.get_buffer('res_0_input_counts', stage_input_count_buffers[0]);
-//popencl.get_buffer('res_1', stage_results[1]);
-//popencl.get_buffer('res_1_input_counts', stage_input_count_buffers[1]);
 
 console.log('n_stage', n_stage);
 console.log('time_diff', time_diff);
