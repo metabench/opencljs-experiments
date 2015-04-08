@@ -12,7 +12,9 @@ class MyObject : public node::ObjectWrap {
   ~MyObject();
 
   static NAN_METHOD(New);
-  static NAN_METHOD(NAN_VectorAdd);
+
+  //static NAN_METHOD(NAN_VectorAdd);
+
   static NAN_METHOD(NAN_AddBuffer);
   static NAN_METHOD(NAN_AddKernel);
   static NAN_METHOD(NAN_SetBuffer);

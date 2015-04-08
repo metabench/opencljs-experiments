@@ -1,4 +1,6 @@
-var POpenCL = require('./cpp/build/release/ocl.node').MyObject;
+//var POpenCL = require('./cpp/build/release/ocl.node').MyObject;
+
+var POpenCL = require('./popencl');
 var smalloc = require('smalloc');
 var jsgui = require('../../ws/js/core/jsgui-lang-essentials');
 var each = jsgui.eac;
@@ -21,9 +23,35 @@ var write_binary_operation_kernel = mod_write_kernel.write_binary_operation_kern
 //  clang looks applicable.
 
 // May be best to use local varables for a and b for the moment.
+var size = 255;
+var a = smalloc.alloc(size, smalloc.Types.Float);
+var b = smalloc.alloc(size, smalloc.Types.Float);
+var res = smalloc.alloc(size, smalloc.Types.Float);
+
+var c;
+for (c = 0; c < size; c++) {
+    a[c] = c;
+    b[c] = c * 2;
+    res[c] = 0;
+}
+
+// Specify it with a single item type?
+
+var k2s = write_binary_operation_kernel('vecAdd', Float32Array, 'return a + b;');
+
+// then quick code to run the binary operation kernel...
+
+// using a, b, res.
+
+// The OpenCL module could automatically create its buffers?
+//  Though maybe that would not be useful when running a function many times, changing some data.
+
+// could also be done without getting the kernel reference?
 
 
-var k2s = write_binary_operation_kernel('vecAdd', Float32Array, 'return a + b;')
+//
+
+
 
 //var k2s = write_kernel('vecAdd', [['a', Float32Array], ['b', Float32Array]], ['output', Float32Array], `
 //  res = a[id] + b[id];
@@ -52,36 +80,36 @@ var k2s = write_binary_operation_kernel('vecAdd', Float32Array, 'return a + b;')
 console.log('k2s', k2s);
 
 var kernelSource = k2s;
-var size = 255;
-var a = smalloc.alloc(size, smalloc.Types.Float);
-var b = smalloc.alloc(size, smalloc.Types.Float);
-var res = smalloc.alloc(size, smalloc.Types.Float);
-var c;
-for (c = 0; c < size; c++) {
-    a[c] = c;
-    b[c] = c * 2;
-    res[c] = 0;
-}
+
+
+
+
 // We can give it the kernel.
 var popencl = new POpenCL();
 
-popencl.add_buffer('A', size);
-popencl.add_buffer('B', size);
-popencl.add_buffer('Res', size);
+// Would be nice to have popencl as a JavaScript module that wraps the C++.
+
+// It would wrap calls to the C++ with a more convenient interface.
+
+
+
+popencl.add_buffer('a', size);
+popencl.add_buffer('b', size);
+popencl.add_buffer('res', size);
 
 popencl.add_kernel('vecAdd', kernelSource);
 // Let's set the first two buffers.
-popencl.set_buffer('A', a);
-popencl.set_buffer('B', b);
+popencl.set_buffer('a', a);
+popencl.set_buffer('b', b);
 // Queue input buffers, single output buffer.
 //  Only will be one output buffer I think.
 var start_time = process.hrtime();
 //popencl.execute_kernel('vecAdd', ['A', 'B'], 'Res');
-popencl.execute_kernel('vecAdd', ['A', 'B'], 'Res');
+popencl.execute_kernel('vecAdd', ['a', 'b'], 'res');
 var time_diff = process.hrtime(start_time);
 //popencl.vector_add(a, b, res);
 //popencl.execute_kernel(['A', 'B'], ['Res']);
-popencl.get_buffer('Res', res);
+popencl.get_buffer('res', res);
 // Then let's execute the kernel on the buffer.
 //console.log('res', res);
 console.log('time_diff', time_diff);

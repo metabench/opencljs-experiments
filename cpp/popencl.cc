@@ -737,7 +737,7 @@ void MyObject::Init(Handle<Object> exports) {
   tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
   // Prototype
-  NODE_SET_PROTOTYPE_METHOD(tpl, "vector_add", NAN_VectorAdd);
+  //NODE_SET_PROTOTYPE_METHOD(tpl, "vector_add", NAN_VectorAdd);
 
   NODE_SET_PROTOTYPE_METHOD(tpl, "add_buffer", NAN_AddBuffer);
   NODE_SET_PROTOTYPE_METHOD(tpl, "set_buffer", NAN_SetBuffer);
@@ -876,6 +876,7 @@ NAN_METHOD(MyObject::New) {
   }
 }
 
+/*
 NAN_METHOD(MyObject::NAN_VectorAdd) {
   NanScope();
   //cout << "NAN_VectorAdd" << endl;
@@ -902,7 +903,7 @@ NAN_METHOD(MyObject::NAN_VectorAdd) {
   //VecAdd(size, A, B, Res);
   NanReturnValue(NanNew(1));
 }
-
+*/
 
 unsigned int stored_buffer_size;
 

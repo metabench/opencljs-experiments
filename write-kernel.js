@@ -106,7 +106,7 @@ var write_counted_output_reduction_kernel = function(name, type, reduction_facto
 
 
 var get_cl_param_type = function(type) {
-  var str_type;
+  var str_param_type;
 
   if (type === Float32Array) str_param_type = 'Float32Array';
   if (type === Uint32Array) str_param_type = 'Uint32Array';

@@ -1,4 +1,6 @@
-var POpenCL = require('./cpp/build/release/ocl.node').MyObject;
+var POpenCL = require('./popencl');
+
+//var POpenCL = require('./cpp/build/release/ocl.node').MyObject;
 var smalloc = require('smalloc');
 var jsgui = require('../../ws/js/core/jsgui-lang-essentials');
 var each = jsgui.eac;
