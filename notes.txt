@@ -1,0 +1,9 @@
+// Notes
+
+Want to make the calling of the kernels easier.
+More similar to calling functions in JavaScript
+Automatic creation and destruction of temporary buffers
+
+// Also want to store various value series in the OpenCL memory.
+// Could have named values serieses.
+//  That could be quite useful.

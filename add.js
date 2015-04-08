@@ -7,13 +7,33 @@ var mod_write_kernel = require('./write-kernel');
 
 var write_kernel_all_size_params = mod_write_kernel.write_kernel_all_size_params;
 var write_kernel = mod_write_kernel.write_kernel;
+var write_binary_operation_kernel = mod_write_kernel.write_binary_operation_kernel;
 
 // Perhaps running a kernel just once (or on one set of data) will not be so useful.
 // Run kernel over set, get results, repeat...
 
-var k2s = write_kernel('vecAdd', [['a', Float32Array], ['b', Float32Array]], ['res', Float32Array], `
-  res[id] = a[id] + b[id];
-`);
+// maybe need a better way of parsing variable names.
+//  hard to get single values like this...
+
+//  except if we could get a and b turned into the local variables...
+
+// definitely would be useful to be able to parse C++ can change it.
+//  clang looks applicable.
+
+// May be best to use local varables for a and b for the moment.
+
+
+var k2s = write_binary_operation_kernel('vecAdd', Float32Array, 'return a + b;')
+
+//var k2s = write_kernel('vecAdd', [['a', Float32Array], ['b', Float32Array]], ['output', Float32Array], `
+//  res = a[id] + b[id];
+//`);
+
+
+
+// Function that returns two results per item...?
+
+
 
 // Kernel that can execute with a different number of results being made to the input data.
 
@@ -56,6 +76,7 @@ popencl.set_buffer('B', b);
 // Queue input buffers, single output buffer.
 //  Only will be one output buffer I think.
 var start_time = process.hrtime();
+//popencl.execute_kernel('vecAdd', ['A', 'B'], 'Res');
 popencl.execute_kernel('vecAdd', ['A', 'B'], 'Res');
 var time_diff = process.hrtime(start_time);
 //popencl.vector_add(a, b, res);
@@ -64,4 +85,4 @@ popencl.get_buffer('Res', res);
 // Then let's execute the kernel on the buffer.
 //console.log('res', res);
 console.log('time_diff', time_diff);
-//console.log('res', res);
+console.log('res', res);

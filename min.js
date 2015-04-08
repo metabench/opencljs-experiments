@@ -40,14 +40,14 @@ console.log('JavaScript init data time: ', time_diff);
 
 var k3s;
 
-var ks_reduce_average = write_counted_reduction_kernels('counted_reduce_min', Float32Array, reduction_factor,
+var ks_reduce_min = write_counted_reduction_kernels('counted_reduce_min', Float32Array, reduction_factor,
 /* prepare    */ `double min = INFINITY;`,
 /* repeat     */ `if(val < min) min = val;`,
 /* conclude   */ `return min;`
 );
 
-var k_weighted_output_reduce_average = ks_reduce_average[0];
-var k_weighted_reduce_average = ks_reduce_average[1];
+var k_weighted_output_reduce_min = ks_reduce_min[0];
+var k_weighted_reduce_min = ks_reduce_min[1];
 
 
 var popencl = new POpenCL();
@@ -80,8 +80,8 @@ while (stage_size > 1) {
 }
 n_stage--;
 
-popencl.add_kernel('counted_output_reduce_min', k_weighted_output_reduce_average);
-popencl.add_kernel('counted_reduce_min', k_weighted_reduce_average);
+popencl.add_kernel('counted_output_reduce_min', k_weighted_output_reduce_min);
+popencl.add_kernel('counted_reduce_min', k_weighted_reduce_min);
 
 // Let's set the first two buffers.
 popencl.set_buffer('A', a);
