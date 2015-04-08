@@ -5,6 +5,13 @@ var jsgui = require('../../ws/js/core/jsgui-lang-essentials');
 //'use strict';
 var CPP_Obj = require('./cpp/build/release/ocl.node').MyObject;
 
+var mod_write_kernel = require('./write-kernel');
+
+var write_kernel_all_size_params = mod_write_kernel.write_kernel_all_size_params;
+var write_kernel = mod_write_kernel.write_kernel;
+var write_counted_reduction_kernels = mod_write_kernel.write_counted_reduction_kernels;
+
+
 var POpenCL = jsgui.Class.extend({
   'init': function(spec) {
     this.cpp_obj = new CPP_Obj();
@@ -16,6 +23,23 @@ var POpenCL = jsgui.Class.extend({
   'add_kernel': function(name, source) {
     return this.cpp_obj.add_kernel(name, source);
   },
+
+  'add_counted_reduction_kernels': function(name, type, reduction_factor, prepare, repeat, conclude) {
+    //var kernels = new Array(2);
+
+    var kernels = write_counted_reduction_kernels(name, type, reduction_factor, prepare, repeat, conclude);
+
+    // need the kernel names...
+
+    console.log('kernels[0].name', kernels[0].name);
+
+    this.add_kernel(kernels[0][0], kernels[0][1]);
+    this.add_kernel(kernels[1][0], kernels[1][1]);
+
+    return kernels;
+
+  },
+
   'set_buffer': function(name, value) {
     return this.cpp_obj.set_buffer(name, value);
   },

@@ -48,8 +48,8 @@ var ks_reduce_min = write_counted_reduction_kernels('counted_reduce_min', Float3
 /* conclude   */ `return min;`
 );
 
-var k_weighted_output_reduce_min = ks_reduce_min[0];
-var k_weighted_reduce_min = ks_reduce_min[1];
+var k_weighted_output_reduce_min = ks_reduce_min[0][1];
+var k_weighted_reduce_min = ks_reduce_min[1][1];
 
 
 var popencl = new POpenCL();

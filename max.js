@@ -48,73 +48,18 @@ console.log('JavaScript init data time: ', time_diff);
 
 var k3s;
 
-// Counted reduction / weighted reduction
-// -----------------
-// Counted reduction probably is a better name for the reduction process. Weighting is used for averages.
-
-// Could also have a quicker way of writing the counted functions / a generalization for all of them.
+// could have a counted reduce function have a wr prefix?
 
 
-// could have a shorthand for writing a counted reduction kernel.
-//  maybe specify both functions next to each other.
-
-// write_counted_reduction_kernel
-// write_counted_output_reduction_kernel
-
-// For a reduce function, there will be less choice about types.
-//  The counts stay as Uint32Array
-//  Will have choice of the data type.
-//
-
-// Maybe want some kind of a template for this function too
-//  How it knows the processed_input_count.
-
-
-// This kind of reduce function could be expressed simply too.
-
-// Was really easy just to change some code.
-//  Probably want an easier abstraction to do this?
-//  Keep reducing the amount of code needed, and complexity of it to the essentials.
-
-//var k_weighted_output_reduce_average = write_counted_output_reduction_kernel('weighted_output_reduce_average', Float32Array, reduction_factor,
-//  /* prepare    */ `double max = -INFINITY;`,
-//  /* repeat     */ `if(val > max) max = val;`,
-//  /* conclude   */ `return max;`
-//);
-
-//var k_weighted_reduce_average = write_counted_reduction_kernel('weighted_reduce_average', Float32Array, reduction_factor,
-///* prepare    */ `double max = -INFINITY;`,
-///* repeat     */ `if(val > max) max = val;`,
-///* conclude   */ `return max;`
-//);
-
-var ks_reduce_average = write_counted_reduction_kernels('weighted_reduce_average', Float32Array, reduction_factor,
+var ks_reduce_average = write_counted_reduction_kernels('weighted_reduce_max', Float32Array, reduction_factor,
 /* prepare    */ `double max = -INFINITY;`,
 /* repeat     */ `if(val > max) max = val;`,
 /* conclude   */ `return max;`
 );
 
-var k_weighted_output_reduce_average = ks_reduce_average[0];
-var k_weighted_reduce_average = ks_reduce_average[1];
+var k_weighted_output_reduce_average = ks_reduce_average[0][1];
+var k_weighted_reduce_average = ks_reduce_average[1][1];
 
-
-
-
-//var k_weighted_output_reduce_average = write_counted_output_reduction_kernel('weighted_output_reduce_average', Float32Array, reduction_factor,
-//  /* prepare    */ `double max = -INFINITY;`,
-//  /* repeat     */ `if(val > max) max = val;`,
-//  /* conclude   */ `return max;`
-//);
-
-
-//var k_weighted_reduce_average = write_counted_reduction_kernel('weighted_reduce_average', Float32Array, reduction_factor,
-///* prepare    */ `double max = -INFINITY;`,
-///* repeat     */ `if(val > max) max = val;`,
-///* conclude   */ `return max;`
-//);
-//console.log('k_weighted_output_reduce_average', k_weighted_output_reduce_average);
-//console.log('k_weighted_reduce_average', k_weighted_reduce_average);
-//var kernelSource = k_weighted_output_reduce_average;
 
 var popencl = new POpenCL();
 
@@ -146,8 +91,8 @@ while (stage_size > 1) {
 }
 n_stage--;
 
-popencl.add_kernel('weighted_output_reduce_average', k_weighted_output_reduce_average);
-popencl.add_kernel('weighted_reduce_average', k_weighted_reduce_average);
+popencl.add_kernel('weighted_output_reduce_max', k_weighted_output_reduce_average);
+popencl.add_kernel('weighted_reduce_max', k_weighted_reduce_average);
 
 // Let's set the first two buffers.
 popencl.set_buffer('A', a);
@@ -155,13 +100,13 @@ popencl.set_buffer('A', a);
 start_time = process.hrtime();
 // First reduction, factor of 128, but it's not necessary to have the full 128 items, or have a number of items that's divisible by 128.
 
-popencl.execute_kernel_all_size_params('weighted_output_reduce_average', ['A', 'Res_0', 'Res_0_input_counts']);
+popencl.execute_kernel_all_size_params('weighted_output_reduce_max', ['A', 'Res_0', 'Res_0_input_counts']);
 
 var level = 1;
 
 while (level <= n_stage) {
   var prev_level = level - 1;
-  popencl.execute_kernel_all_size_params('weighted_reduce_average', ['Res_' + prev_level, 'Res_' + prev_level + '_input_counts', 'Res_' + level, 'Res_' + level + '_input_counts']);
+  popencl.execute_kernel_all_size_params('weighted_reduce_max', ['Res_' + prev_level, 'Res_' + prev_level + '_input_counts', 'Res_' + level, 'Res_' + level + '_input_counts']);
   level++;
 }
 

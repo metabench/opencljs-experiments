@@ -21,11 +21,24 @@ for (c = 0; c < size; c++) {
     a[c] = c * 0.000000125;
 }
 
-var ks_reduce_total = write_counted_reduction_kernels('weighted_reduce_total', Float32Array, reduction_factor,
-/* prepare    */ `double total = 0;`,
-/* repeat     */ `total += val;`,
-/* conclude   */ `return total;`
-);
+
+
+//var ks_reduce_total = write_counted_reduction_kernels('weighted_reduce_total', Float32Array, reduction_factor,
+///* prepare    */ `double total = 0;`,
+///* repeat     */ `total += val;`,
+///* conclude   */ `return total;`
+//);
+
+
+// what about a simpler way to write and run a kernel?
+
+// or at least write and add.
+
+// .add_counted_reduction_kernels(...)
+
+
+
+
 
 //var k_weighted_output_reduce_total = ks_reduce_total[0];
 //var k_weighted_reduce_total = ks_reduce_total[1];
@@ -37,6 +50,11 @@ var ks_reduce_total = write_counted_reduction_kernels('weighted_reduce_total', F
 // can have an algorithm to set up the reduction stages.
 
 var popencl = new POpenCL();
+
+popencl.add_counted_reduction_kernels('weighted_reduce_total', Float32Array, reduction_factor,
+/* prepare    */ `double total = 0;`,
+/* repeat     */ `total += val;`,
+/* conclude   */ `return total;`);
 
 var stage_size = size;
 var stage_reduced_size;
@@ -69,8 +87,8 @@ while (stage_size > 1) {
 n_stage--;
 
 
-popencl.add_kernel('weighted_output_reduce_total', ks_reduce_total[0]);
-popencl.add_kernel('weighted_reduce_total', ks_reduce_total[1]);
+//popencl.add_kernel('weighted_output_reduce_total', ks_reduce_total[0]);
+//popencl.add_kernel('weighted_reduce_total', ks_reduce_total[1]);
 
 // Let's set the first two buffers.
 popencl.set_buffer('A', a);

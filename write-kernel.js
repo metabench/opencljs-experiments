@@ -40,10 +40,19 @@ var write_counted_reduction_kernels = function(name, type, reduction_factor, pre
   var counted_output_only_name = replace(name, 'weighted_reduce', 'weighted_output_reduce');
   counted_output_only_name = replace(counted_output_only_name, 'counted_reduce', 'counted_output_reduce');
 
+  var kernel_1 = write_counted_output_reduction_kernel(counted_output_only_name, type, reduction_factor, preparer, repeater, concluder);
+
+  //console.log('counted_output_only_name', counted_output_only_name);
+
+  //kernel_1._name = counted_output_only_name;
+
+  //console.log('kernel_1._name', kernel_1._name);
+  var kernel_2 = write_counted_reduction_kernel(name, type, reduction_factor, preparer, repeater, concluder);
+  //kernel_2.name = name;
 
 
-  return [write_counted_output_reduction_kernel(counted_output_only_name, type, reduction_factor, preparer, repeater, concluder),
-    write_counted_reduction_kernel(name, type, reduction_factor, preparer, repeater, concluder)];
+  return [[counted_output_only_name, kernel_1], [name, kernel_2]];
+
 }
 
 
