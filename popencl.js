@@ -1,7 +1,7 @@
 // Maybe a non-'harmony' version would be better?
 //  Or use Babel with iojs?
 var jsgui = require('../../ws/js/core/jsgui-lang-essentials');
-
+var smalloc = require('smalloc');
 //'use strict';
 var CPP_Obj = require('./cpp/build/release/ocl.node').MyObject;
 
@@ -43,6 +43,35 @@ var POpenCL = jsgui.Class.extend({
   'set_buffer': function(name, value) {
     return this.cpp_obj.set_buffer(name, value);
   },
+
+  'setup_reduction_buffers': function(name_prefix, type, size, reduction_factor) {
+    var n_stage = 0;
+    var stage_sizes = [];
+    var stage_size = size;
+    var stage_results = [];
+    var stage_input_count_buffers = [];
+
+    stage_sizes.push(stage_size);
+
+
+    while (stage_size > 1) {
+      stage_reduced_size = Math.ceil(stage_size / reduction_factor);
+      console.log('stage_reduced_size', stage_reduced_size);
+
+      stage_results.push(smalloc.alloc(stage_reduced_size, smalloc.Types.Float));
+      stage_input_count_buffers.push(smalloc.alloc(stage_reduced_size, smalloc.Types.Uint32));
+
+      console.log('n_stage', n_stage);
+
+      this.add_buffer(name_prefix + '_' + n_stage, stage_reduced_size);
+      this.add_buffer(name_prefix + '_' + n_stage + '_input_counts', stage_reduced_size);
+
+      stage_size = stage_reduced_size;
+      n_stage++;
+    }
+    return [stage_sizes, stage_results, stage_input_count_buffers];
+  },
+
   'get_buffer': function(name, value) {
     return this.cpp_obj.get_buffer(name, value);
   },
