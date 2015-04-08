@@ -1,17 +1,12 @@
 var POpenCL = require('./popencl');
-
-//var POpenCL = require('./cpp/build/release/ocl.node').MyObject;
 var smalloc = require('smalloc');
 var jsgui = require('../../ws/js/core/jsgui-lang-essentials');
 var each = jsgui.eac;
-
 var mod_write_kernel = require('./write-kernel');
 var write_kernel_all_size_params = mod_write_kernel.write_kernel_all_size_params;
 var write_kernel = mod_write_kernel.write_kernel;
 var write_counted_reduction_kernels = mod_write_kernel.write_counted_reduction_kernels;
-
 var size = 250000000;
-
 var reduction_factor = 8;
 
 var a = smalloc.alloc(size, smalloc.Types.Float);
@@ -20,34 +15,6 @@ var c;
 for (c = 0; c < size; c++) {
     a[c] = c * 0.000000125;
 }
-
-
-
-//var ks_reduce_total = write_counted_reduction_kernels('weighted_reduce_total', Float32Array, reduction_factor,
-///* prepare    */ `double total = 0;`,
-///* repeat     */ `total += val;`,
-///* conclude   */ `return total;`
-//);
-
-
-// what about a simpler way to write and run a kernel?
-
-// or at least write and add.
-
-// .add_counted_reduction_kernels(...)
-
-
-
-
-
-//var k_weighted_output_reduce_total = ks_reduce_total[0];
-//var k_weighted_reduce_total = ks_reduce_total[1];
-
-//var kernelSource = k_weighted_output_reduce_total;
-
-//console.log('kernelSource', kernelSource);
-
-// can have an algorithm to set up the reduction stages.
 
 var popencl = new POpenCL();
 
@@ -58,7 +25,6 @@ popencl.add_counted_reduction_kernels('weighted_reduce_total', Float32Array, red
 
 var stage_size = size;
 var stage_reduced_size;
-
 
 var n_stage = 0;
 var stage_sizes = [];
