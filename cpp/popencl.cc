@@ -986,7 +986,7 @@ NAN_METHOD(MyObject::NAN_SetBuffer) {
   //  Could check that.
 
 
-  std::string buffer_name (*NanAsciiString(args[0]));
+  //std::string buffer_name (*NanAsciiString(args[0]));
   //cout << "save buffer_name " << buffer_name << endl;
 
 

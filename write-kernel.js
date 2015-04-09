@@ -147,6 +147,7 @@ var write_kernel_all_size_params = function(name, input_parameters, source) {
     param_name = arr_param[0];
     param_type = arr_param[1];
 
+    if (param_type === 'float') str_param_type = 'Float32Array';
     if (param_type === Float32Array) str_param_type = 'Float32Array';
     if (param_type === Uint32Array) str_param_type = 'Uint32Array';
     if (param_type === Uint64Array) str_param_type = 'Uint64Array';
