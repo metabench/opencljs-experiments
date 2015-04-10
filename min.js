@@ -17,12 +17,15 @@ var reduction_factor = 8;
 console.log('initializing data');
 
 var a = smalloc.alloc(size, smalloc.Types.Float);
+var b = smalloc.alloc(size, smalloc.Types.Float);
 var start_time = process.hrtime();
 for (var c = 0; c < size; c++) {
     if (c % 16 === 0) {
       a[c] = 10;
+      b[c] = 11;
     } else {
       a[c] = 2;
+      b[c] = 3;
     }
 }
 
@@ -48,6 +51,13 @@ var kernel_def = {
 };
 
 
+// Would be interested in doing multiple executions, using a cached kernel.
+//  For the moment, it should save the kernel when it's named.
+//  Then we should be able to call the kernel by name.
+
+
+
+
 // This works
 
 // Should not really need to use a counted reduction, like the average.
@@ -69,9 +79,23 @@ var preloaded_buffers = function() {
   start_time = process.hrtime();
   var min = popencl.execute_counted_reduction('min', kernel_def, 'a', 'float');
   time_diff = process.hrtime(start_time);
-  console.log('preloaded_buffers time: ', time_diff);
+  console.log('with compilation time: ', time_diff);
 
   console.log('min', min);
+
+
+  // execute_counted_reduction without a kernel_def.
+  //  It will execute the reduction by name.
+  //  Perhaps a kernel should have an attached data type, so it knows already it's a float.
+  //   Also need to make kernels work with other data types, such as doubles.
+
+
+
+
+  start_time = process.hrtime();
+  min = popencl.execute_counted_reduction('min', 'b', 'float');
+  time_diff = process.hrtime(start_time);
+  console.log('without kernel compilation time: ', time_diff);
 
 }
 preloaded_buffers();

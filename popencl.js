@@ -3,6 +3,7 @@
 var jsgui = require('../../ws/js/core/jsgui-lang-essentials');
 var arrayify = jsgui.arrayify;
 var tof = jsgui.tof;
+var fp = jsgui.fp;
 var smalloc = require('smalloc');
 var smalloc_length = require('../smalloc-length/build/Release/smalloc-length.node');
 //'use strict';
@@ -42,6 +43,10 @@ var POpenCL = jsgui.Class.extend({
     this.add_kernel(kernels[1][0], kernels[1][1]);
 
     return kernels;
+
+  },
+
+  'ensure_counted_reduction_kernels': function(name, type, reduction_factor, prepare, repeat, conclude) {
 
   },
 
@@ -114,7 +119,20 @@ var POpenCL = jsgui.Class.extend({
     return this.cpp_obj.execute_kernel_all_size_params(name, param_names);
   },
 
-  'execute_counted_reduction': function(name, obj_kernel_instructions, input_buffer, data_type) {
+  // Maybe we will call this without an input buffer.
+
+  'execute_counted_reduction': fp(function(a, sig) {
+    var name, obj_kernel_instructions, input_buffer, data_type;
+    if (a.l === 3) {
+      name = a[0]; input_buffer = a[1], data_type = a[2];
+    }
+    if (a.l === 4) {
+      name = a[0]; obj_kernel_instructions = a[1], input_buffer = a[2], data_type = a[3];
+    }
+
+    // maybe the obj_kernel_instructions has not been set...
+
+
 
     // the input buffer could be a string reference to an existing OpenCL buffer.
     //  Could have a way to leave the result in OpenCL memory... but will do that later.
@@ -137,29 +155,37 @@ var POpenCL = jsgui.Class.extend({
 
     var size;
 
+    // do those kernels already exist?
+
+
+
 
     var counted_reduction_kernel_name = 'counted_reduce_' + name;
     var counted_output_reduction_kernel_name = 'counted_output_reduce_' + name;
 
 
-    var start_time = process.hrtime();
+    // Could have an ensure_counted_reduction_kernels that checks to see if they already exist.
 
-    var counted_reduction_kernels = this.add_counted_reduction_kernels(counted_reduction_kernel_name, data_type, reduction_factor,
-    /* prepare    */ `double min = INFINITY;`,
-    /* repeat     */ `if(val < min) min = val;`,
-    /* conclude   */ `return min;`);
+    // only if the obj_kernel_instructions has been specified do we add this.
+    if (obj_kernel_instructions) {
+      var start_time = process.hrtime();
+
+      //var arr_kernel_instructions = [obj_kernel_instructions.prepare, obj_kernel_instructions.repeat, obj_kernel_instructions.conclude];
+      //console.log('arr_kernel_instructions', arr_kernel_instructions);
+
+      var counted_reduction_kernels = this.add_counted_reduction_kernels(counted_reduction_kernel_name, data_type, reduction_factor,
+        obj_kernel_instructions.prepare, obj_kernel_instructions.repeat, obj_kernel_instructions.conclude);
 
 
-    var time_diff = process.hrtime(start_time);
+      var time_diff = process.hrtime(start_time);
 
 
-    console.log('kernel create time: ', time_diff);
-
-
+      console.log('kernel create time: ', time_diff);
+    }
 
     var t_input_buffer = tof(input_buffer);
 
-    console.log('t_input_buffer', t_input_buffer);
+    //console.log('t_input_buffer', t_input_buffer);
 
     var input_buffer_name;
 
@@ -190,6 +216,7 @@ var POpenCL = jsgui.Class.extend({
 
 
 
+    // Don't know if this could / use preexisting reduction buffers.
 
 
 
@@ -306,7 +333,7 @@ var POpenCL = jsgui.Class.extend({
 
     return res;
 
-  },
+  }),
 
   'execute_counted_reduction_kernel': function(name, input_buffer_name, output_buffer_name, num_stages) {
     // This may be able to work out the number of stages from the input buffers
