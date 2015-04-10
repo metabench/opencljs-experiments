@@ -19,6 +19,7 @@ class MyObject : public node::ObjectWrap {
   static NAN_METHOD(NAN_AddKernel);
   static NAN_METHOD(NAN_SetBuffer);
   static NAN_METHOD(NAN_GetBuffer);
+  static NAN_METHOD(NAN_GetBufferSize);
   static NAN_METHOD(NAN_ExecuteKernel);
   static NAN_METHOD(NAN_ExecuteKernelAllSizeParams);
   static NAN_METHOD(NAN_ReleaseAll);

@@ -803,6 +803,7 @@ void MyObject::Init(Handle<Object> exports) {
   NODE_SET_PROTOTYPE_METHOD(tpl, "add_buffer", NAN_AddBuffer);
   NODE_SET_PROTOTYPE_METHOD(tpl, "set_buffer", NAN_SetBuffer);
   NODE_SET_PROTOTYPE_METHOD(tpl, "get_buffer", NAN_GetBuffer);
+  NODE_SET_PROTOTYPE_METHOD(tpl, "get_buffer_size", NAN_GetBufferSize);
 
   NODE_SET_PROTOTYPE_METHOD(tpl, "add_kernel", NAN_AddKernel);
   NODE_SET_PROTOTYPE_METHOD(tpl, "execute_kernel", NAN_ExecuteKernel);
@@ -1085,6 +1086,39 @@ NAN_METHOD(MyObject::NAN_SetBuffer) {
   NanReturnValue(NanNew(1));
 }
 
+
+// NAN_GetBufferSize
+
+NAN_METHOD(MyObject::NAN_GetBufferSize) {
+
+  // This could store the buffer in the background.
+
+  // Could make OpenCL system where a fairly small number of buffers (like 2 or 3) are stored and used.
+  //  Some buffers would be more frequently reloaded.
+  NanScope();
+
+
+  //cout << "LoadBuffer" << endl;
+
+  std::string buffer_name (*NanAsciiString(args[0]));
+
+
+  //GetBuffer(buffer_name, A);
+  //obj = args[1].As<Object>();
+  //if (obj->HasIndexedPropertiesInExternalArrayData()) {
+  //    B = static_cast<float*>(obj->GetIndexedPropertiesExternalArrayData());
+  //}
+  //obj = args[2].As<Object>();
+  //if (obj->HasIndexedPropertiesInExternalArrayData()) {
+  //    Res = static_cast<float*>(obj->GetIndexedPropertiesExternalArrayData());
+  //}
+  //cout << "size " << size << endl;
+  //_LoadBuffer(size, A);
+  NanReturnValue(cl_buffer_sizes[map_buffer_indexes_by_name[buffer_name]]);
+
+
+
+}
 
 NAN_METHOD(MyObject::NAN_GetBuffer) {
 

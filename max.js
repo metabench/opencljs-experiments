@@ -59,6 +59,8 @@ var k3s;
 
 // could have a counted reduce function have a wr prefix?
 
+//var kernel_def =
+
 
 var ks_reduce_average = write_counted_reduction_kernels('weighted_reduce_max', Float32Array, reduction_factor,
 /* prepare    */ `double max = -INFINITY;`,
@@ -141,6 +143,24 @@ n_stage--;
 
 
 popencl.set_buffer('a', a);
+
+/*
+var preloaded_buffers = function() {
+  popencl.add_buffer('a', size);
+  popencl.set_buffer('a', a);
+
+  start_time = process.hrtime();
+  var min = popencl.execute_counted_reduction('min', kernel_def, 'a', 'float');
+  time_diff = process.hrtime(start_time);
+  console.log('preloaded_buffers time: ', time_diff);
+
+  console.log('min', min);
+
+}
+preloaded_buffers();
+
+throw 'stop';
+*/
 
 start_time = process.hrtime();
 // First reduction, factor of 128, but it's not necessary to have the full 128 items, or have a number of items that's divisible by 128.

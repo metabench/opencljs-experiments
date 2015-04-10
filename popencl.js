@@ -2,6 +2,7 @@
 //  Or use Babel with iojs?
 var jsgui = require('../../ws/js/core/jsgui-lang-essentials');
 var arrayify = jsgui.arrayify;
+var tof = jsgui.tof;
 var smalloc = require('smalloc');
 var smalloc_length = require('../smalloc-length/build/Release/smalloc-length.node');
 //'use strict';
@@ -102,6 +103,9 @@ var POpenCL = jsgui.Class.extend({
   'get_buffer': function(name, value) {
     return this.cpp_obj.get_buffer(name, value);
   },
+  'get_buffer_size': function(name) {
+    return this.cpp_obj.get_buffer_size(name);
+  },
   'execute_kernel': function(name, input_param_names, output_param_name) {
     // execute_kernel('vecAdd', ['A', 'B'], 'Res');
     return this.cpp_obj.execute_kernel(name, input_param_names, output_param_name);
@@ -111,18 +115,83 @@ var POpenCL = jsgui.Class.extend({
   },
 
   'execute_counted_reduction': function(name, obj_kernel_instructions, input_buffer, data_type) {
+
+    // the input buffer could be a string reference to an existing OpenCL buffer.
+    //  Could have a way to leave the result in OpenCL memory... but will do that later.
+    //  Transferring the result is much quicker than transferring the input.
+
+
+
+
+
     var reduction_factor = 8;
-    var size = smalloc_length(input_buffer);
+
+    // but maybe we have not been given an input buffer.
+    //  may be referring to the existing buffer.
+    //  should be able to get the buffer size from the C++.
+
+
+
+
+
+
+    var size;
+
 
     var counted_reduction_kernel_name = 'counted_reduce_' + name;
     var counted_output_reduction_kernel_name = 'counted_output_reduce_' + name;
+
+
+    var start_time = process.hrtime();
 
     var counted_reduction_kernels = this.add_counted_reduction_kernels(counted_reduction_kernel_name, data_type, reduction_factor,
     /* prepare    */ `double min = INFINITY;`,
     /* repeat     */ `if(val < min) min = val;`,
     /* conclude   */ `return min;`);
 
-    this.add_buffer('a', size);
+
+    var time_diff = process.hrtime(start_time);
+
+
+    console.log('kernel create time: ', time_diff);
+
+
+
+    var t_input_buffer = tof(input_buffer);
+
+    console.log('t_input_buffer', t_input_buffer);
+
+    var input_buffer_name;
+
+    if (t_input_buffer === 'string') {
+
+      input_buffer_name = input_buffer;
+      size = this.get_buffer_size(input_buffer_name);
+    } else {
+      size = smalloc_length(input_buffer);
+      // Otherwise it's an object
+
+      input_buffer_name = 'a';
+
+      var start_time = process.hrtime();
+
+      this.add_buffer(input_buffer_name, size);
+
+      this.set_buffer(input_buffer_name, input_buffer);
+
+
+      var time_diff = process.hrtime(start_time);
+
+
+      console.log('input buffer(a) load time: ', time_diff);
+
+
+    }
+
+
+
+
+
 
     var res_setup_buffers = this.setup_reduction_buffers('res', data_type, size, reduction_factor);
 
@@ -149,17 +218,12 @@ var POpenCL = jsgui.Class.extend({
     //  Do need to load some buffers at times, at other times can keep data within GPU buffered memory.
     //  Some AMD architectures look like they could be loads faster for this... maybe worth a look.
 
-    
+
 
 
 
     // time to load input buffer...
-    var start_time = process.hrtime();
-    this.set_buffer('a', input_buffer);
-    var time_diff = process.hrtime(start_time);
 
-
-    console.log('input buffer(a) load time: ', time_diff);
 
     //this.set_buffer('a', input_buffer);
 
@@ -167,15 +231,30 @@ var POpenCL = jsgui.Class.extend({
 
     //console.log('counted_reduction_kernel_name', counted_reduction_kernel_name);
     //this.execute_reduction_kernel('counted_reduce_min', 'a', 'res', n_stage);
-    this.execute_kernel_all_size_params(counted_output_reduction_kernel_name, ['a', 'res_0', 'res_0_input_counts']);
 
+    console.log('input_buffer_name', input_buffer_name);
     var level = 1;
+    var prev_level;
+
+    var start_time = process.hrtime();
+
+    this.execute_kernel_all_size_params(counted_output_reduction_kernel_name, [input_buffer_name, 'res_0', 'res_0_input_counts']);
+
+    //var easp = this.execute_kernel_all_size_params;
 
     while (level <= n_stage) {
-      var prev_level = level - 1;
+      prev_level = level - 1;
       this.execute_kernel_all_size_params(counted_reduction_kernel_name, ['res_' + prev_level, 'res_' + prev_level + '_input_counts', 'res_' + level, 'res_' + level + '_input_counts']);
       level++;
     }
+
+    var time_diff = process.hrtime(start_time);
+
+
+    console.log('actual kernel execution time: ', time_diff);
+
+
+
 
     //time_diff = process.hrtime(start_time);
 
@@ -213,9 +292,9 @@ var POpenCL = jsgui.Class.extend({
     // Then we can deallocate all the OpenCL buffers.
     //  Deallocate the res_buffer too, when returning the res variable.
 
-    console.log('res_buffer_names', res_buffer_names);
+    ///console.log('res_buffer_names', res_buffer_names);
 
-    console.log('pre release buffers');
+    //console.log('pre release buffers');
 
 
     var start_time = process.hrtime();
@@ -223,10 +302,6 @@ var POpenCL = jsgui.Class.extend({
     var time_diff = process.hrtime(start_time);
     // 17, reduced by a factor of 128 would go to 1
     console.log('buffers release time: ', time_diff);
-
-
-
-
 
     return res;
 
