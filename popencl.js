@@ -36,7 +36,7 @@ var POpenCL = jsgui.Class.extend({
 
     // need the kernel names...
 
-    console.log('kernels[0].name', kernels[0].name);
+    //console.log('kernels[0].name', kernels[0].name);
 
     this.add_kernel(kernels[0][0], kernels[0][1]);
     this.add_kernel(kernels[1][0], kernels[1][1]);
@@ -69,7 +69,7 @@ var POpenCL = jsgui.Class.extend({
 
 
       stage_reduced_size = Math.ceil(stage_size / reduction_factor);
-      console.log('stage_reduced_size', stage_reduced_size);
+      //console.log('stage_reduced_size', stage_reduced_size);
 
 
       // TODO: Pay attention to the buffer types
@@ -78,10 +78,10 @@ var POpenCL = jsgui.Class.extend({
 
       //stage_input_count_buffers.push(smalloc.alloc(stage_reduced_size, smalloc.Types.Uint32));
 
-      console.log('n_stage', n_stage);
+      //console.log('n_stage', n_stage);
 
 
-      console.log(name_prefix + '_' + n_stage);
+      //console.log(name_prefix + '_' + n_stage);
 
       var b_res = name_prefix + '_' + n_stage;
       var b_res_counts = b_res + '_input_counts';
@@ -232,7 +232,7 @@ var POpenCL = jsgui.Class.extend({
     //console.log('counted_reduction_kernel_name', counted_reduction_kernel_name);
     //this.execute_reduction_kernel('counted_reduce_min', 'a', 'res', n_stage);
 
-    console.log('input_buffer_name', input_buffer_name);
+    //console.log('input_buffer_name', input_buffer_name);
     var level = 1;
     var prev_level;
 
@@ -288,6 +288,7 @@ var POpenCL = jsgui.Class.extend({
     //console.log('res_setup_buffers', res_setup_buffers);
 
     var res = res_buffer[0];
+    smalloc.dispose(res_buffer);
 
     // Then we can deallocate all the OpenCL buffers.
     //  Deallocate the res_buffer too, when returning the res variable.
@@ -336,7 +337,7 @@ var POpenCL = jsgui.Class.extend({
     this.cpp_obj.release_buffer(buffer_name);
     var time_diff = process.hrtime(start_time);
     // 17, reduced by a factor of 128 would go to 1
-    console.log('cpp_obj.release_buffer time: ', time_diff);
+    //console.log('cpp_obj.release_buffer time: ', time_diff);
 
 
 

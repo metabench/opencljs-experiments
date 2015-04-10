@@ -42,14 +42,16 @@ console.log('JavaScript init data time: ', time_diff);
 //  See if we can get the kernel compilation times.
 
 var kernel_def = {
-  'prepare': `double min = INFINITY;`,
-  'repeat': `if(val < min) min = val;`,
-  'conclude': `return min;`
+  'prepare':   `double min = INFINITY;`,
+  'repeat':    `  if(val < min) min = val;`,
+  'conclude':  `return min;`
 };
 
 
 // This works
 
+// Should not really need to use a counted reduction, like the average.
+//  The maximum found does not depend on input counts.
 
 var with_loading_buffers = function() {
   start_time = process.hrtime();

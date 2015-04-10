@@ -419,7 +419,7 @@ void ExecuteKernel(unsigned int kernel_id, std::vector<unsigned int> input_buffe
     //  So we have one execution per result item.
 
 
-    cout << "ExecuteKernel" << endl;
+    //cout << "ExecuteKernel" << endl;
 
     // Though maybe we should be specifying the size in bytes here.
 
@@ -443,7 +443,7 @@ void ExecuteKernel(unsigned int kernel_id, std::vector<unsigned int> input_buffe
         // Will make a different version of execute that provides the sizes of various buffers as const parameters.
         //  With reduce functions, may need to check that the input bounds are not exceeded.
 
-        cout << "cl_buffer_sizes[input_buffer_ids[c]] / sizeof(float) " << cl_buffer_sizes[input_buffer_ids[c]] / sizeof(float) << endl;
+        //cout << "cl_buffer_sizes[input_buffer_ids[c]] / sizeof(float) " << cl_buffer_sizes[input_buffer_ids[c]] / sizeof(float) << endl;
 
 
 
@@ -456,13 +456,13 @@ void ExecuteKernel(unsigned int kernel_id, std::vector<unsigned int> input_buffe
     // look at the size of the 1st buffer for the moment?
     //  Maybe the last buffer?
 
-    cout << "cl_buffer_sizes[output_buffer_id] " << (unsigned int)cl_buffer_sizes[output_buffer_id] << endl;
+    //cout << "cl_buffer_sizes[output_buffer_id] " << (unsigned int)cl_buffer_sizes[output_buffer_id] << endl;
 
     // The last kernel arg should be the number of items in the output buffer.
 
 
     unsigned int num_items = cl_buffer_sizes[output_buffer_id] / sizeof(float);
-    cout << "num_items " << num_items << endl;
+    //cout << "num_items " << num_items << endl;
 
 
     //err = clSetKernelArg(kernel, arg_idx++, sizeof(unsigned int), &cl_buffer_sizes[output_buffer_id]);
@@ -476,8 +476,8 @@ void ExecuteKernel(unsigned int kernel_id, std::vector<unsigned int> input_buffe
 
     // More precise control over the size?
 
-    cout << "globalSize " << globalSize << endl;
-    cout << "localSize " << localSize << endl;
+    //cout << "globalSize " << globalSize << endl;
+    //cout << "localSize " << localSize << endl;
 
     // However, if running a reduction algorithm...
     //  We do use the sizes from the output buffer.
@@ -923,7 +923,7 @@ NAN_METHOD(MyObject::New) {
     //clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
     //kernel = clCreateKernel(program, opencl_fn_name, &err);
 
-    cout << "Done some OpenCL init." << endl;
+    //cout << "Done some OpenCL init." << endl;
 
     //MyObject* obj = new MyObject(value);
     MyObject* obj = new MyObject();
@@ -1271,8 +1271,8 @@ NAN_METHOD(MyObject::NAN_ExecuteKernel) {
 
   std::string output_buffer_name (*NanAsciiString(args[2]));
 
-  cout << "len_input_buffer_names " << len_input_buffer_names << endl;
-  cout << "output_buffer_name " << output_buffer_name << endl;
+  //cout << "len_input_buffer_names " << len_input_buffer_names << endl;
+  //cout << "output_buffer_name " << output_buffer_name << endl;
 
   // std::string tempString(*v8::String::Utf8Value(args[someInteger]));
 
