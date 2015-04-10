@@ -123,6 +123,42 @@ size_t globalSize, localSize;
 cl_int err;
 
 
+// Probably want to release buffer by name
+
+void ReleaseBuffer(std::string name) {
+  // Need to remove the buffer from the index too.
+
+  int buffer_id = map_buffer_indexes_by_name[name];
+
+  //cout << "Release buffer: " << name << endl;
+
+
+
+
+  clReleaseMemObject(cl_buffers[buffer_id]);
+
+  //cl_buffers.erase(buffer_id);
+  map_buffer_indexes_by_name.erase(name);
+
+  // After that, can we nullify the items in the vectors?
+
+  // And with releasing multiple buffers at once?
+  //  Could have an operation that does that...
+
+
+  // Or even, we note that the maps are dirty, and update them if dirty before they need to be used.
+
+  // I think dirty map correction would be the right way of doing it - after removing items from Vector.
+  //  That may need to be before accessing another buffer?
+
+  // Could just set it to null, and then remove the null ones and redo the map.
+
+  cl_buffers[buffer_id] = NULL;
+
+
+
+}
+
 
 void ReleaseAll() {
 
@@ -137,20 +173,52 @@ void ReleaseAll() {
   */
 
 
+  // Will need to remove things from the indexes too.
+
+
   for(std::vector<cl_mem>::size_type i = 0; i != cl_buffers.size(); i++) {
       /* std::cout << someVector[i]; ... */
+
+      // Delete an object from a vector, later recalculate the maps?
+
+
+
       clReleaseMemObject(cl_buffers[i]);
+      //cl_buffers[i] = NULL;
+      // And can remove the names too.
+      //  So the names would get reassigned to new items
+
+
+
+
+
   }
 
   for(std::vector<cl_program>::size_type i = 0; i != vector_programs.size(); i++) {
       /* std::cout << someVector[i]; ... */
       clReleaseProgram(vector_programs[i]);
+      //vector_programs[i] = NULL;
   }
 
   for(std::vector<cl_kernel>::size_type i = 0; i != vector_kernels.size(); i++) {
       /* std::cout << someVector[i]; ... */
+
       clReleaseKernel(vector_kernels[i]);
+      //vector_kernels[i] = NULL;
+
   }
+
+  cl_buffers.clear();
+  vector_programs.clear();
+  vector_kernels.clear();
+
+  map_kernel_indexes_by_name.clear();
+  map_buffer_indexes_by_name.clear();
+
+  i_vector = 0;
+  i_buffer = 0;
+
+  // erase the maps?
 
   clReleaseContext(context);
   clReleaseCommandQueue(queue);
@@ -434,17 +502,11 @@ void ExecuteKernel(unsigned int kernel_id, std::vector<unsigned int> input_buffe
 
     // err  = clSetKernelArg(kernel, 0, sizeof(cl_mem), &d_a);
 
-
-
-
 }
 
 void AddBuffer(std::string name, unsigned int size) {
 
     // Though maybe we should be specifying the size in bytes here.
-
-
-
     //unsigned int size = cl_buffer_sizes[idx_buffer];
 
     //cout << "AddBuffer" << endl;
@@ -452,7 +514,6 @@ void AddBuffer(std::string name, unsigned int size) {
     unsigned int bytes = size*sizeof(float);
 
     //cout << "bytes " << bytes << endl;
-
 
     //cout << "pre clCreateBuffer" << endl;
     cl_buffers[i_buffer] = clCreateBuffer(context, CL_MEM_READ_WRITE, bytes, NULL, NULL);
@@ -748,6 +809,7 @@ void MyObject::Init(Handle<Object> exports) {
   NODE_SET_PROTOTYPE_METHOD(tpl, "execute_kernel_all_size_params", NAN_ExecuteKernelAllSizeParams);
 
   NODE_SET_PROTOTYPE_METHOD(tpl, "release_all", NAN_ReleaseAll);
+  NODE_SET_PROTOTYPE_METHOD(tpl, "release_buffer", NAN_ReleaseBuffer);
 
   // ExecuteKernelAllSizeParams
 
@@ -986,7 +1048,7 @@ NAN_METHOD(MyObject::NAN_SetBuffer) {
   //  Could check that.
 
 
-  //std::string buffer_name (*NanAsciiString(args[0]));
+  std::string buffer_name (*NanAsciiString(args[0]));
   //cout << "save buffer_name " << buffer_name << endl;
 
 
@@ -1063,6 +1125,26 @@ NAN_METHOD(MyObject::NAN_GetBuffer) {
   NanReturnValue(NanNew(1));
 
 
+
+}
+
+// NAN_ReleaseBuffer
+
+NAN_METHOD(MyObject::NAN_ReleaseBuffer) {
+
+  // This could store the buffer in the background.
+
+  // Could make OpenCL system where a fairly small number of buffers (like 2 or 3) are stored and used.
+  //  Some buffers would be more frequently reloaded.
+  NanScope();
+
+  std::string buffer_name (*NanAsciiString(args[0]));
+
+  //unsigned int kernel_id = map_kernel_indexes_by_name[kernel_name];
+
+
+  ReleaseBuffer(buffer_name);
+  NanReturnValue(NanNew(1));
 
 }
 

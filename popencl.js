@@ -1,6 +1,7 @@
 // Maybe a non-'harmony' version would be better?
 //  Or use Babel with iojs?
 var jsgui = require('../../ws/js/core/jsgui-lang-essentials');
+var arrayify = jsgui.arrayify;
 var smalloc = require('smalloc');
 var smalloc_length = require('../smalloc-length/build/Release/smalloc-length.node');
 //'use strict';
@@ -56,6 +57,8 @@ var POpenCL = jsgui.Class.extend({
 
     stage_sizes.push(stage_size);
 
+    var buffer_names = [];
+
 
     while (stage_size > 1) {
 
@@ -79,19 +82,21 @@ var POpenCL = jsgui.Class.extend({
 
       console.log(name_prefix + '_' + n_stage);
 
-      this.add_buffer(name_prefix + '_' + n_stage, stage_reduced_size);
-      this.add_buffer(name_prefix + '_' + n_stage + '_input_counts', stage_reduced_size);
+      var b_res = name_prefix + '_' + n_stage;
+      var b_res_counts = b_res + '_input_counts';
+
+      buffer_names.push(b_res, b_res_counts);
+
+
+      this.add_buffer(b_res, stage_reduced_size);
+      this.add_buffer(b_res_counts, stage_reduced_size);
 
       stage_size = stage_reduced_size;
       stage_sizes.push(stage_size);
       n_stage++;
     }
 
-
-
-
-
-    return stage_sizes;
+    return [stage_sizes, buffer_names];
   },
 
   'get_buffer': function(name, value) {
@@ -123,7 +128,8 @@ var POpenCL = jsgui.Class.extend({
 
 
 
-    var stage_sizes = res_setup_buffers;
+    var stage_sizes = res_setup_buffers[0];
+    var res_buffer_names = res_setup_buffers[1];
     //console.log('stage_sizes', stage_sizes);
     //var stage_results = res_setup_buffers[1];
     //var stage_input_count_buffers = res_setup_buffers[2];
@@ -138,7 +144,26 @@ var POpenCL = jsgui.Class.extend({
 
 
     // Let's set the first two buffers.
+
+    // This looks like it's where it's taking most of the time.
+    //  Do need to load some buffers at times, at other times can keep data within GPU buffered memory.
+    //  Some AMD architectures look like they could be loads faster for this... maybe worth a look.
+
+    
+
+
+
+    // time to load input buffer...
+    var start_time = process.hrtime();
     this.set_buffer('a', input_buffer);
+    var time_diff = process.hrtime(start_time);
+
+
+    console.log('input buffer(a) load time: ', time_diff);
+
+    //this.set_buffer('a', input_buffer);
+
+
 
     //console.log('counted_reduction_kernel_name', counted_reduction_kernel_name);
     //this.execute_reduction_kernel('counted_reduce_min', 'a', 'res', n_stage);
@@ -184,6 +209,25 @@ var POpenCL = jsgui.Class.extend({
     //console.log('res_setup_buffers', res_setup_buffers);
 
     var res = res_buffer[0];
+
+    // Then we can deallocate all the OpenCL buffers.
+    //  Deallocate the res_buffer too, when returning the res variable.
+
+    console.log('res_buffer_names', res_buffer_names);
+
+    console.log('pre release buffers');
+
+
+    var start_time = process.hrtime();
+    this.release_buffer(res_buffer_names);
+    var time_diff = process.hrtime(start_time);
+    // 17, reduced by a factor of 128 would go to 1
+    console.log('buffers release time: ', time_diff);
+
+
+
+
+
     return res;
 
   },
@@ -207,6 +251,25 @@ var POpenCL = jsgui.Class.extend({
 
 
   },
+
+  // and release buffer
+
+  'release_buffer': arrayify(function(buffer_name) {
+    //console.log('js release_buffer');
+
+    var start_time = process.hrtime();
+    this.cpp_obj.release_buffer(buffer_name);
+    var time_diff = process.hrtime(start_time);
+    // 17, reduced by a factor of 128 would go to 1
+    console.log('cpp_obj.release_buffer time: ', time_diff);
+
+
+
+
+  }),
+
+
+
   'release_all': function() {
     return this.cpp_obj.release_all();
   }
