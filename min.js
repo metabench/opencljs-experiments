@@ -108,10 +108,19 @@ popencl.add_counted_reduction_kernels('counted_reduce_min', Float32Array, reduct
 popencl.add_buffer('a', size);
 
 var res_setup_buffers = popencl.setup_reduction_buffers('res', smalloc.Types.Float, size, reduction_factor);
+// Not so sure this needs to return the actual buffers?
 
-var stage_sizes = res_setup_buffers[0];
-var stage_results = res_setup_buffers[1];
-var stage_input_count_buffers = res_setup_buffers[2];
+
+
+
+//var stage_sizes = res_setup_buffers[0];
+
+// Really need the last buffer(s) to be returned.
+
+
+
+//var stage_results = res_setup_buffers[1];
+//var stage_input_count_buffers = res_setup_buffers[2];
 
 var n_stage = stage_sizes.length - 1;
 
@@ -201,6 +210,11 @@ time_diff = process.hrtime(start_time);
 
 console.log('n_stage', n_stage);
 console.log('time_diff', time_diff);
+
+// Get it into the last buffer.
+
+var b_res = smalloc.alloc(1, smalloc.Types.Float);
+console.log('b_res', b_res);
 
 popencl.get_buffer('res_' + n_stage, stage_results[n_stage]);
 popencl.get_buffer('res_' + n_stage + '_input_counts', stage_input_count_buffers[n_stage]);

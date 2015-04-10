@@ -51,7 +51,7 @@ var POpenCL = jsgui.Class.extend({
     var n_stage = 0;
     var stage_sizes = [];
     var stage_size = size;
-    var stage_results = [];
+    //var stage_results = [];
     //var stage_input_count_buffers = [];
 
     stage_sizes.push(stage_size);
@@ -87,7 +87,11 @@ var POpenCL = jsgui.Class.extend({
       n_stage++;
     }
 
-    return [stage_sizes, stage_results];
+
+
+
+
+    return stage_sizes;
   },
 
   'get_buffer': function(name, value) {
@@ -119,7 +123,7 @@ var POpenCL = jsgui.Class.extend({
 
 
 
-    var stage_sizes = res_setup_buffers[0];
+    var stage_sizes = res_setup_buffers;
     //console.log('stage_sizes', stage_sizes);
     //var stage_results = res_setup_buffers[1];
     //var stage_input_count_buffers = res_setup_buffers[2];
